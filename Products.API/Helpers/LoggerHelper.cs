@@ -1,5 +1,5 @@
 ﻿// /Helpers/LoggerHelper.cs
-namespace ProductsAPI.Helpers
+namespace Products.Helpers
 {
     public enum LogLevelType
     {

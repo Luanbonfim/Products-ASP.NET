@@ -1,6 +1,6 @@
-﻿using ProductsAPI.Models;
+﻿using Products.Domain.Entities;
 
-namespace ProductsAPI.Repositories
+namespace Products.Repositories
 {
     public interface IProductRepository
     {

@@ -1,7 +1,7 @@
-﻿using ProductsAPI.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Products.Domain.Entities;
 
-namespace ProductsAPI.Data
+namespace Products.Infrastructure.Persistence
 {
     public class ProductsDbContext : DbContext
     {

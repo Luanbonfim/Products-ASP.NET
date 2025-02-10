@@ -1,6 +1,6 @@
-﻿using ProductsAPI.Models;
+﻿using Products.Domain.Entities;
 
-namespace ProductsAPI.Services
+namespace Products.Services
 {
     public interface IProductService
     {

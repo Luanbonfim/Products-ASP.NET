@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace ProductsAPI.Middlewares
+namespace Products.Middlewares
 {
     public class LoggingMiddleware
     {

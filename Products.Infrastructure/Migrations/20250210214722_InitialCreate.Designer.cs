@@ -3,14 +3,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using ProductsAPI.Data;
+using Products.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace ProductsAPI.Migrations
+namespace Products.Infrastructure.Migrations
 {
     [DbContext(typeof(ProductsDbContext))]
-    [Migration("20250210152445_InitialCreate")]
+    [Migration("20250210214722_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -19,7 +19,7 @@ namespace ProductsAPI.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.1");
 
-            modelBuilder.Entity("ApiTest.Models.Product", b =>
+            modelBuilder.Entity("Products.Domain.Product", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -27,7 +27,6 @@ namespace ProductsAPI.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(255)
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("Price")
@@ -36,6 +35,26 @@ namespace ProductsAPI.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Products");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Laptop",
+                            Price = 999.99m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Smartphone",
+                            Price = 499.99m
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Headphones",
+                            Price = 79.99m
+                        });
                 });
 #pragma warning restore 612, 618
         }

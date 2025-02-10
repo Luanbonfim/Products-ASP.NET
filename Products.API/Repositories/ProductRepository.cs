@@ -1,8 +1,8 @@
-﻿using ProductsAPI.Models;
+﻿using Products.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using ProductsAPI.Data;
+using Products.Infrastructure.Persistence;
 
-namespace ProductsAPI.Repositories
+namespace Products.Repositories
 {
     public class ProductRepository : IProductRepository
     {

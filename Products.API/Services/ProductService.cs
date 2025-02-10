@@ -1,7 +1,7 @@
-﻿using ProductsAPI.Models;
-using ProductsAPI.Repositories;
+﻿using Products.Domain.Entities;
+using Products.Repositories;
 
-namespace ProductsAPI.Services
+namespace Products.Services
 {
     public class ProductService : IProductService
     {

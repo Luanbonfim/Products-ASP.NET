@@ -1,10 +1,10 @@
-﻿using ProductsAPI.Models;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ProductsAPI.Services;
-using ProductsAPI.Helpers;
+using Products.Services;
+using Products.Helpers;
+using Products.Domain.Entities;
 
-namespace ProductsAPI.Controllers
+namespace Products.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
