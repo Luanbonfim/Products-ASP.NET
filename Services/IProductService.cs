@@ -1,6 +1,6 @@
 ﻿using ProductsAPI.Models;
 
-namespace CrudApi.Services
+namespace ProductsAPI.Services
 {
     public interface IProductService
     {

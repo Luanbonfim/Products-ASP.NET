@@ -4,7 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace CrudApi.Controllers
+namespace ProductsAPI.Controllers
 {
     [ApiController]
     [Route("api/auth")]

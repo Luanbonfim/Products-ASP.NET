@@ -1,6 +1,6 @@
 ﻿using ProductsAPI.Models;
-using CrudApi.Data;
 using Microsoft.EntityFrameworkCore;
+using ProductsAPI.Data;
 
 namespace ProductsAPI.Repositories
 {

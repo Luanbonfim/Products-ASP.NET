@@ -1,10 +1,10 @@
 ﻿using ProductsAPI.Models;
-using CrudApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MyProject.Helpers;
+using ProductsAPI.Services;
+using ProductsAPI.Helpers;
 
-namespace CrudApi.Controllers
+namespace ProductsAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

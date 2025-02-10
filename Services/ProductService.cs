@@ -1,7 +1,7 @@
 ﻿using ProductsAPI.Models;
 using ProductsAPI.Repositories;
 
-namespace CrudApi.Services
+namespace ProductsAPI.Services
 {
     public class ProductService : IProductService
     {

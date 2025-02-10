@@ -1,7 +1,7 @@
 ﻿using ProductsAPI.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CrudApi.Data
+namespace ProductsAPI.Data
 {
     public class ProductsDbContext : DbContext
     {
