@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Products.Application.Products.Interfaces;
 using Products.Domain.Entities;
 using Products.Infrastructure.Persistence;
-using Products.Infrastructure.Repositories.Interfaces;
 
 namespace Products.Infrastructure.Repositories
 {

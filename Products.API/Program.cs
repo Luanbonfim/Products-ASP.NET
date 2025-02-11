@@ -6,10 +6,13 @@ using System.Text;
 using Products.Middlewares;
 using Products.Infrastructure.Persistence;
 using Products.Infrastructure.Repositories;
-using Products.Infrastructure.Repositories.Interfaces;
-using Products.Application.Services.Interfaces;
-using Products.Application.Services;
 using Products.Common.Helpers;
+using Products.Application.Services;
+using Products.Application.Products.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Products.Application.Identity.Interfaces;
+using Products.Infrastructure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +21,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Register DbContext with SQL Server
 builder.Services.AddDbContext<ProductsDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddDbContext<UserDbContext>(options =>
+                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 //// Add JWT Authentication
 builder.Services.AddAuthentication(options =>
@@ -79,11 +85,23 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 builder.Services.AddScoped<IProductService, ProductService>();
 
+builder.Services.AddScoped<IIdentityService, IdentityService>();
+
+
 builder.Services.AddLogging();
 
 builder.Logging.AddConsole();
 
 builder.Services.AddSingleton<LoggerHelper>();
+
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<UserDbContext>()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
+});
 
 var app = builder.Build();
 

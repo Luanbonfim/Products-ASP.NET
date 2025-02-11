@@ -1,5 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Products.Application.Identity.Interfaces;
+using Products.Common.Helpers;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -11,21 +15,59 @@ namespace Products.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IConfiguration _config;
-        public AuthController(IConfiguration config)
+        private readonly IIdentityService _identityService;
+        private readonly LoggerHelper _loggerHelper;
+        public AuthController(IConfiguration config, IIdentityService identityService, ILogger<AuthController> logger, LoggerHelper loggerHelper)
         {
             _config = config;
+            _identityService = identityService;
+            _loggerHelper = loggerHelper;
         }
 
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginModel model)
+        public async Task<IActionResult> Login([FromBody] LoginModel request)
         {
-            if (model.Username == "admin" && model.Password == "password") // Dummy check
+            if (request == null)
             {
-                var token = GenerateJwtToken(model.Username);
-                return Ok(new { token });
+                return BadRequest("Invalid login data.");
             }
 
-            return Unauthorized();
+            var result = await _identityService.LoginAsync(request.Username, request.Password);
+
+            if (result.IsSuccess)
+            {
+                var token = GenerateJwtToken(request.Username);
+
+                if (string.IsNullOrEmpty(token))
+                {
+                    return Unauthorized("Invalid credentials.");
+                }
+
+                return Ok(new { Token = token });
+            }
+
+             return Unauthorized("Invalid credentials.");
+          }
+
+        [HttpPost("createuser")]
+        //[Authorize]
+        public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request)
+        {
+            if (request == null)
+            {
+                return BadRequest("Invalid user data.");
+            }
+
+            var result = await _identityService.CreateUserAsync(request.UserName, request.Password, request.Role);
+
+            if (result.IsSuccess)
+            {
+                _loggerHelper.LogMessage(LogLevelType.Information, $"User {request.UserName} created successfully with role {request.Role}");
+                return StatusCode(201);
+            }
+
+            _loggerHelper.LogMessage(LogLevelType.Error, $"Error creating user {request.UserName}: {string.Join(", ", result.Errors)}");
+            return BadRequest(result.Errors);
         }
 
         private string GenerateJwtToken(string username)
@@ -56,4 +98,14 @@ namespace Products.Controllers
         public string Username { get; set; }
         public string Password { get; set; }
     }
+
+    // DTO to hold request data for creating a user
+    public class CreateUserRequest
+    {
+        public string UserName { get; set; }
+        public string Role { get; set; }
+        public string Password { get; set; }
+    }
 }
+
+
