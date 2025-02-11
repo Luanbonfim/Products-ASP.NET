@@ -8,7 +8,8 @@ A simple and secure RESTful API for managing products in an e-commerce or invent
 - **JWT Authentication**: Secure API with Bearer token authorization.
 - **Logging**: Centralized logging and Middleware for tracking API requests and errors.
 - **Swagger Documentation**: Auto-generated API documentation for easy exploration and testing.
-- **DDD**: Domain Driven Design for clean architecture 
+- **DDD**: Domain Driven Design for clean architecture.
+- **Identity Service**: Identity Service to handle users and roles.
   
 ## Technology Stack
 
@@ -16,6 +17,7 @@ A simple and secure RESTful API for managing products in an e-commerce or invent
 - **Entity Framework Core** (SQLite)
 - **JWT Authentication**
 - **Swagger for API documentation**
+
 
 ## Prerequisites
 
