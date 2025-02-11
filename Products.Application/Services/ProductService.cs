@@ -1,7 +1,8 @@
-﻿using Products.Domain.Entities;
-using Products.Repositories;
+﻿using Products.Application.Services.Interfaces;
+using Products.Domain.Entities;
+using Products.Infrastructure.Repositories.Interfaces;
 
-namespace Products.Services
+namespace Products.Application.Services
 {
     public class ProductService : IProductService
     {

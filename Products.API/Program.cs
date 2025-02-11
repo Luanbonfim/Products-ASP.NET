@@ -3,11 +3,13 @@ using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Products.Repositories;
 using Products.Middlewares;
-using Products.Services;
-using Products.Helpers;
 using Products.Infrastructure.Persistence;
+using Products.Infrastructure.Repositories;
+using Products.Infrastructure.Repositories.Interfaces;
+using Products.Application.Services.Interfaces;
+using Products.Application.Services;
+using Products.Common.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 

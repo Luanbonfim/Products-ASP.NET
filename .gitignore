@@ -28,10 +28,6 @@ obj/
 wwwroot/
 
 # ASP.NET Core session and temporary files
-appsettings.json
-appsettings.Development.json
-appsettings.Production.json
-appsettings.Staging.json
 local.settings.json
 
 # User secrets (local development secrets)
@@ -65,3 +61,7 @@ yarn-error.log
 
 # Ignore any temporary files created by Visual Studio for debugging, testing, etc.
 .vs/
+
+# Ignore SQLite DB Files
+*app.db*
+

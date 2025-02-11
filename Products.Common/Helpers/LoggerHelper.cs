@@ -1,5 +1,6 @@
-﻿// /Helpers/LoggerHelper.cs
-namespace Products.Helpers
+﻿using Microsoft.Extensions.Logging;
+
+namespace Products.Common.Helpers
 {
     public enum LogLevelType
     {
