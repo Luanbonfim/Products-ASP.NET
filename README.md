@@ -1,4 +1,4 @@
-# Products API
+# Products API DDD
 
 A simple and secure RESTful API for managing products in an e-commerce or inventory system. This API allows users to create, retrieve, and manage products, with authentication implemented via JWT tokens for secure access.
 
@@ -8,6 +8,7 @@ A simple and secure RESTful API for managing products in an e-commerce or invent
 - **JWT Authentication**: Secure API with Bearer token authorization.
 - **Logging**: Centralized logging and Middleware for tracking API requests and errors.
 - **Swagger Documentation**: Auto-generated API documentation for easy exploration and testing.
+- **DDD**: Domain Driven Design for clean architecture 
   
 ## Technology Stack
 
