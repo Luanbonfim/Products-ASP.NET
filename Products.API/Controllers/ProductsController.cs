@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Products.Domain.Entities;
-using Products.Application.Services.Interfaces;
 using Products.Common.Helpers;
+using Products.Application.Products.Interfaces;
 
 namespace Products.Controllers
 {

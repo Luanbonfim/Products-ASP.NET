@@ -1,6 +1,5 @@
-﻿using Products.Application.Services.Interfaces;
+﻿using Products.Application.Products.Interfaces;
 using Products.Domain.Entities;
-using Products.Infrastructure.Repositories.Interfaces;
 
 namespace Products.Application.Services
 {

@@ -14,11 +14,11 @@ namespace Products.Infrastructure.Persistence
         {
             modelBuilder.Entity<Product>()
                 .Property(p => p.Name)
-                .HasColumnType("TEXT"); // ✅ Fix: Use TEXT instead of nvarchar(max)
+                .HasColumnType("TEXT"); //  to addapt to SQLite
 
             modelBuilder.Entity<Product>()
                 .Property(p => p.Price)
-                .HasColumnType("REAL"); // ✅ Fix: Use REAL instead of decimal(18,2)
+                .HasColumnType("REAL"); //  to addapt to SQLite
 
             modelBuilder.Entity<Product>().HasData(
                new Product { Id = 1, Name = "Laptop", Price = 999.99M },
