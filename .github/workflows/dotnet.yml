@@ -13,7 +13,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Setup .NET
-      uses: actions/setup-dotnet@v7 # Updated to v7 for .NET 9.0 compatibility
+      uses: actions/setup-dotnet@v6  
       with:
         dotnet-version: '9.0.x'
     - name: Restore dependencies
