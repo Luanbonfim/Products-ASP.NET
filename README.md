@@ -5,7 +5,7 @@ A simple and secure RESTful API for managing products in an e-commerce or invent
 ## Features
 
 - **CRUD Operations**: Create, Read, Update, Delete products in SQLite.
-- **JWT Authentication**: Secure API with Bearer token authorization.
+- **Identity Service**: Secure authentication based on user roles.
 - **Logging**: Centralized logging and Middleware for tracking API requests and errors.
 - **Swagger Documentation**: Auto-generated API documentation for easy exploration and testing.
 - **DDD**: Domain Driven Design for clean architecture.
