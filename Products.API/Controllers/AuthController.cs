@@ -1,12 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity.Data;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.AspNetCore.Mvc;
 using Products.Application.Identity.Interfaces;
 using Products.Common.Helpers;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace Products.Controllers
 {
@@ -35,19 +29,10 @@ namespace Products.Controllers
             var result = await _identityService.LoginAsync(request.Username, request.Password);
 
             if (result.IsSuccess)
-            {
-                var token = GenerateJwtToken(request.Username);
+                return Ok();
 
-                if (string.IsNullOrEmpty(token))
-                {
-                    return Unauthorized("Invalid credentials.");
-                }
-
-                return Ok(new { Token = token });
-            }
-
-             return Unauthorized("Invalid credentials.");
-          }
+            return Unauthorized("Invalid credentials.");
+        }
 
         [HttpPost("createuser")]
         //[Authorize]
@@ -70,42 +55,21 @@ namespace Products.Controllers
             return BadRequest(result.Errors);
         }
 
-        private string GenerateJwtToken(string username)
+        public class LoginModel
         {
-            var jwtSettings = _config.GetSection("Jwt");
-            var key = Encoding.UTF8.GetBytes(jwtSettings["Secret"]);
+            public string Username { get; set; }
+            public string Password { get; set; }
+        }
 
-            var claims = new List<Claim>
+        // DTO to hold request data for creating a user
+        public class CreateUserRequest
         {
-            new Claim(JwtRegisteredClaimNames.Sub, username),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
-
-            var token = new JwtSecurityToken(
-                issuer: jwtSettings["Issuer"],
-                audience: jwtSettings["Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            public string UserName { get; set; }
+            public string Role { get; set; }
+            public string Password { get; set; }
         }
     }
-
-    public class LoginModel
-    {
-        public string Username { get; set; }
-        public string Password { get; set; }
-    }
-
-    // DTO to hold request data for creating a user
-    public class CreateUserRequest
-    {
-        public string UserName { get; set; }
-        public string Role { get; set; }
-        public string Password { get; set; }
-    }
 }
+
 
 
