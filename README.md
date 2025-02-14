@@ -13,6 +13,7 @@ A simple and secure RESTful API for managing products in an e-commerce or invent
 ## Technology Stack
 
 - **.NET 6** (or .NET Core)
+- **ASP.NET**
 - **Entity Framework Core** (SQLite)
 - **Swagger for API documentation**
 - **Identity for Authentication**
