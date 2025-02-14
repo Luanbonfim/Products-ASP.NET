@@ -62,5 +62,4 @@ yarn-error.log
 # Ignore any temporary files created by Visual Studio for debugging, testing, etc.
 .vs/
 
-# Ignore SQLite database files
-app.db
+
