@@ -1,64 +1,43 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Products.Middlewares;
+using Products.Application.Identity.Interfaces;
+using Products.Application.Products.Interfaces;
+using Products.Application.Services;
+using Products.Common.Helpers;
+using Products.Infrastructure.Identity;
 using Products.Infrastructure.Persistence;
 using Products.Infrastructure.Repositories;
-using Products.Common.Helpers;
-using Products.Application.Services;
-using Products.Application.Products.Interfaces;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Products.Application.Identity.Interfaces;
-using Products.Infrastructure.Identity;
+using Products.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-// Register DbContext with SQL Server
+// Register DbContext with SQL Lite
 builder.Services.AddDbContext<ProductsDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddDbContext<UserDbContext>(options =>
                 options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-//// Add JWT Authentication
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = false,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]))
-    };
-});
+//// Add Cookies based Authentication
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+           .AddCookie();
 
 // Add Swagger for API documentation
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
 
-    // Add JWT support in Swagger
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    // Add Cookie Authentication in Swagger
+    c.AddSecurityDefinition("cookieAuth", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme.",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
+        Name = "Cookie",
         Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
+        In = ParameterLocation.Cookie,
+        Description = "ASP.NET Identity Cookie Authentication"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -69,10 +48,10 @@ builder.Services.AddSwaggerGen(c =>
                 Reference = new OpenApiReference
                 {
                     Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
+                    Id = "cookieAuth"
                 }
             },
-            new string[] { }
+            new List<string>()
         }
     });
 });
@@ -87,10 +66,9 @@ builder.Services.AddScoped<IProductService, ProductService>();
 
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 
+builder.Logging.AddConsole();
 
 builder.Services.AddLogging();
-
-builder.Logging.AddConsole();
 
 builder.Services.AddSingleton<LoggerHelper>();
 
@@ -105,18 +83,13 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-//    app.UseSwagger();
-//    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API v1"));
-//}
-
 // Use Swagger UI middleware
 app.UseSwagger();  // Adds Swagger JSON endpoint
 app.UseSwaggerUI();  // Adds Swagger UI for browsing the API
 
 app.UseHttpsRedirection();
+
+app.UseRouting();
 
 // Enable authentication and authorization
 app.UseAuthentication();
