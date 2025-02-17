@@ -1,39 +1,36 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Products.Application.Products.Interfaces;
 using Products.Domain.Entities;
 using Products.Infrastructure.Persistence;
 using Products.Infrastructure.Repositories;
-using System.Xml.Linq;
+using Products.Tests;
 using Xunit;
 
 namespace Products.Test
 {
     public class ProductRepositoryTests
     {
-        private DbContextOptions<ProductsDbContext> GetInMemoryOptions()
-        {
-            return new DbContextOptionsBuilder<ProductsDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDatabase")
-                .Options;
-        }
-
+        private readonly DbContextOptions<ProductsDbContext> _options;
         public ProductRepositoryTests()
         {
+            _options = Helper.GetInMemoryOptions<ProductsDbContext>("TestDatabase");
+
             SeedInitialData();
         }
 
         [Fact]
         public async Task GetAllAsync_ReturnsProducts()
         {
-            // Arrange: create the context and seed data
-            DbContextOptions<ProductsDbContext> options = GetInMemoryOptions();
+            // Arrange
 
-            // Act: use a new context to simulate a separate usage scenario
-            using (var context = new ProductsDbContext(options))
+
+            // Act
+            using (var context = new ProductsDbContext(_options))
             {
                 var repository = new ProductRepository(context);
                 var products = await repository.GetAllAsync();
 
-                // Assert: verify results
+                // Assert
                 Assert.True(products.Count() > 0);
             }
         }
@@ -43,10 +40,9 @@ namespace Products.Test
         {
             //Arrange
             int id = 1;
-            var options = GetInMemoryOptions();
 
             //Act 
-            using (var context = new ProductsDbContext(options))
+            using (var context = new ProductsDbContext(_options))
             {
                 var repository = new ProductRepository(context);
                 var product = await repository.GetByIdAsync(id);
@@ -62,10 +58,9 @@ namespace Products.Test
         {
             //Arrange
             var newProduct = new Product { Id = 3, Name = "Test Product 3", Price = 100 };
-            var options = GetInMemoryOptions();
 
             //Act 
-            using (var context = new ProductsDbContext(options))
+            using (var context = new ProductsDbContext(_options))
             {
                 var repository = new ProductRepository(context);
                 await repository.AddAsync(newProduct);
@@ -81,12 +76,11 @@ namespace Products.Test
         public async Task UpdateAsync_UpdatesAnExisistingProduct()
         {
             //Arrange 
-            var options = GetInMemoryOptions();
-
+            var product = new Product();
             //Act
-            using (var context = new ProductsDbContext(options))
+            using (var context = new ProductsDbContext(_options))
             {
-                var product = context.Products.First();
+                product = context.Products.First();
                 product.Id = 1;
                 product.Name = "Updated Product";
                 product.Price = 150;
@@ -105,12 +99,10 @@ namespace Products.Test
         public async Task DeleteAsync_DeletesAnExistingProductById()
         {
             //Arrange 
-            var options = GetInMemoryOptions(); 
 
             //Act
-            using (var context = new ProductsDbContext(options))
+            using (var context = new ProductsDbContext(_options))
             {
-                //context.Add(productToDelete);
                 var productToDelete = context.Products.First();
 
                 var repository = new ProductRepository(context);
@@ -118,27 +110,24 @@ namespace Products.Test
 
                 var isDeletedProductFound = context.Products.Any(p => p.Id == productToDelete.Id);
 
-                // Assert: 
+                // Assert
                 Assert.False(isDeletedProductFound);
             }
         }
 
-        private async Task<DbContextOptions<ProductsDbContext>> SeedInitialData()
+        private async void SeedInitialData()
         {
-            var options = GetInMemoryOptions();
 
             var productsList = new List<Product>{
                                                 new Product { Id = 1, Name = "Test Product", Price = 100 },
                                                 new Product { Id = 2, Name = "Test Product 2", Price = 100 }
                                             };
 
-            using (var context = new ProductsDbContext(options))
+            using (var context = new ProductsDbContext(_options))
             {
                 context.Products.AddRange(productsList);
                 await context.SaveChangesAsync();
             }
-
-            return options;
         }
     }
 }
