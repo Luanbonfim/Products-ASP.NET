@@ -33,5 +33,5 @@ jobs:
         dotnet test --no-build --configuration Release
 
     - name: Run Tests
-      working-directory: Products.Tests
-      run: dotnet test --configuration Release --no-build
+      working-directory: ProductsASP.NET
+      run: dotnet test ./Products.sln.sln
