@@ -27,5 +27,5 @@ jobs:
 
     steps:
     - name: Run Tests
-      working-directory: ./ProductsASP.NET
+      working-directory: ./
       run: dotnet test Products.Tests/Products.Tests.csproj --configuration Release --no-build
