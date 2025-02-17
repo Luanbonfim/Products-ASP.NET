@@ -27,4 +27,4 @@ jobs:
 
     steps:
     - name: Run Tests
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test Products.Tests/Products.Tests.csproj --configuration Release --no-build
