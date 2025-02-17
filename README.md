@@ -17,6 +17,7 @@ A simple and secure RESTful API for managing products in an e-commerce or invent
 - **Entity Framework Core** (SQLite)
 - **Swagger for API documentation**
 - **Identity for Authentication**
+- **xUnit for unit testing**
 
 ## Prerequisites
 
