@@ -22,3 +22,16 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+
+    # Run tests and collect coverage using Coverlet
+    - name: Run tests and collect code coverage
+      run: |
+        dotnet test --no-build --configuration Release /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=TestResults/coverage.opencover.xml
+
+    # Upload code coverage report to Codecov (optional, if you use Codecov)
+    - name: Upload coverage report to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        files: TestResults/coverage.opencover.xml
+        flags: unittests
+        name: codecov-report
