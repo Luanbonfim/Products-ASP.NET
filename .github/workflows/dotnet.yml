@@ -26,9 +26,5 @@ jobs:
     needs: build
 
     steps:
-    - name: Run tests and collect code coverage
-      run: |
-        dotnet test --no-build --configuration Release
-
     - name: Run Tests
       run: dotnet test --no-build --verbosity normal
