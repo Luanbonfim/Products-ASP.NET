@@ -1,6 +1,6 @@
 ﻿using Products.Common;
 
-namespace Products.Application.Identity.Interfaces
+namespace Products.Application.Interfaces
 {
     public interface IIdentityService
     {

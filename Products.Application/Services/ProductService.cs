@@ -1,7 +1,7 @@
-﻿using Products.Application.Products.Interfaces;
+﻿using Products.Application.Interfaces;
 using Products.Domain.Entities;
 
-namespace Products.Application.Services
+namespace Products.Application.Services_
 {
     public class ProductService : IProductService
     {

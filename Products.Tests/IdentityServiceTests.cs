@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Products.Application.Identity.Interfaces;
-using Products.Common;
+using Products.Application.Interfaces;
 using Products.Infrastructure.Identity;
 using Products.Infrastructure.Persistence;
 using Xunit;

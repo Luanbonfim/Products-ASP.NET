@@ -2,11 +2,11 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Products.Application.Identity.Interfaces;
-using Products.Application.Products.Interfaces;
-using Products.Application.Services;
+using Products.Application.Interfaces;
+using Products.Application.Services_;
 using Products.Common.Helpers;
 using Products.Infrastructure.Identity;
+using Products.Infrastructure.Messaging;
 using Products.Infrastructure.Persistence;
 using Products.Infrastructure.Repositories;
 using Products.Middlewares;
@@ -65,6 +65,8 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();
 
 builder.Services.AddScoped<IIdentityService, IdentityService>();
+
+builder.Services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
 
 builder.Logging.AddConsole();
 

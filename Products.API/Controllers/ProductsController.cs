@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Products.Domain.Entities;
 using Products.Common.Helpers;
-using Products.Application.Products.Interfaces;
+using Products.Application.Interfaces;
 
 namespace Products.Controllers
 {

@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Products.Application.Identity.Interfaces;
+using Products.Application.Interfaces;
 using Products.Common.Helpers;
 
 namespace Products.Controllers
