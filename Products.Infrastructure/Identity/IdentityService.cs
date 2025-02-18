@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Products.Application.Identity.Interfaces;
+using Products.Application.Interfaces;
 using Products.Common;
 
 namespace Products.Infrastructure.Identity
