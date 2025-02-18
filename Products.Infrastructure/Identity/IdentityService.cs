@@ -7,15 +7,12 @@ namespace Products.Infrastructure.Identity
     public class IdentityService : IIdentityService
     {
         private readonly UserManager<IdentityUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly SignInManager<IdentityUser> _signInManager;
 
         public IdentityService(UserManager<IdentityUser> userManager, 
-                               RoleManager<IdentityRole> roleManager, 
                                SignInManager<IdentityUser> signInManager)
         {
             _userManager = userManager;
-            _roleManager = roleManager;
             _signInManager = signInManager;
         }
 
@@ -36,7 +33,7 @@ namespace Products.Infrastructure.Identity
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (user != null)
-            {
+            { 
                 var result = await _userManager.AddToRoleAsync(user, role);
                 return result.Succeeded
                     ? new OperationResult("Role assigned successfully")
