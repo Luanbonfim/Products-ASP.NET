@@ -18,6 +18,7 @@ A simple and secure RESTful API for managing products in an e-commerce or invent
 - **Swagger for API documentation**
 - **Identity for Authentication**
 - **xUnit for unit testing**
+- **RabbitMQ for messaging service**
 
 ## Prerequisites
 

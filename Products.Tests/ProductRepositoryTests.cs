@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Products.Application.Products.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using Products.Application.Interfaces;
 using Products.Domain.Entities;
+using Products.Infrastructure.Messaging;
 using Products.Infrastructure.Persistence;
 using Products.Infrastructure.Repositories;
 using Products.Tests;
@@ -11,9 +13,14 @@ namespace Products.Test
     public class ProductRepositoryTests
     {
         private readonly DbContextOptions<ProductsDbContext> _options;
+        private readonly IProductRepository _repository;
+        private const string USERS_DATABASE_TEST = "TestDatabase";
         public ProductRepositoryTests()
         {
-            _options = Helper.GetInMemoryOptions<ProductsDbContext>("TestDatabase");
+            _options = Helper.GetInMemoryOptions<ProductsDbContext>(USERS_DATABASE_TEST);
+
+            var serviceProvider = SetupTestServiceProvider();
+            _repository = serviceProvider.GetRequiredService<IProductRepository>();
 
             SeedInitialData();
         }
@@ -25,14 +32,10 @@ namespace Products.Test
 
 
             // Act
-            using (var context = new ProductsDbContext(_options))
-            {
-                var repository = new ProductRepository(context);
-                var products = await repository.GetAllAsync();
+            var products = await _repository.GetAllAsync();
 
-                // Assert
-                Assert.True(products.Count() > 0);
-            }
+            // Assert
+            Assert.True(products.Count() > 0);
         }
 
         [Fact]
@@ -42,15 +45,10 @@ namespace Products.Test
             int id = 1;
 
             //Act 
-            using (var context = new ProductsDbContext(_options))
-            {
-                var repository = new ProductRepository(context);
-                var product = await repository.GetByIdAsync(id);
+            var product = await _repository.GetByIdAsync(id);
 
-                // Assert: 
-                Assert.NotNull(product);
-            }
-
+            // Assert: 
+            Assert.NotNull(product);
         }
 
         [Fact]
@@ -62,8 +60,7 @@ namespace Products.Test
             //Act 
             using (var context = new ProductsDbContext(_options))
             {
-                var repository = new ProductRepository(context);
-                await repository.AddAsync(newProduct);
+                await _repository.AddAsync(newProduct);
 
                 var addedProduct = context.Products.First(p => p.Id == newProduct.Id);
 
@@ -85,8 +82,7 @@ namespace Products.Test
                 product.Name = "Updated Product";
                 product.Price = 150;
 
-                var repository = new ProductRepository(context);
-                await repository.UpdateAsync(product);
+                await _repository.UpdateAsync(product);
 
                 var updatedProduct = context.Products.First(p => p.Id == product.Id);
 
@@ -105,8 +101,7 @@ namespace Products.Test
             {
                 var productToDelete = context.Products.First();
 
-                var repository = new ProductRepository(context);
-                await repository.DeleteAsync(productToDelete.Id);
+                await _repository.DeleteAsync(productToDelete.Id);
 
                 var isDeletedProductFound = context.Products.Any(p => p.Id == productToDelete.Id);
 
@@ -128,6 +123,20 @@ namespace Products.Test
                 context.Products.AddRange(productsList);
                 await context.SaveChangesAsync();
             }
+        }
+
+        private ServiceProvider SetupTestServiceProvider()
+        {
+            var services = new ServiceCollection();
+
+            services.AddDbContext<ProductsDbContext>(options => options.UseInMemoryDatabase(USERS_DATABASE_TEST));
+
+            services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
+            services.AddScoped<IProductRepository, ProductRepository>();
+
+            var serviceProvider = services.BuildServiceProvider();
+
+            return serviceProvider;
         }
     }
 }

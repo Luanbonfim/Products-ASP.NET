@@ -10,10 +10,10 @@ namespace Products.Infrastructure.Repositories
     {
         private readonly ProductsDbContext _context;
         private readonly IRabbitMqPublisher _publisher;
-        public ProductRepository(ProductsDbContext context)
+        public ProductRepository(ProductsDbContext context, IRabbitMqPublisher publisher)
         {
             _context = context;
-            //_publisher = publisher;
+            _publisher = publisher;
         }
 
         public async Task<IEnumerable<Product>> GetAllAsync()
@@ -31,7 +31,7 @@ namespace Products.Infrastructure.Repositories
             await _context.Set<Product>().AddAsync(entity);
             await _context.SaveChangesAsync();
 
-            //PublishMessage(entity, "PRODUCT WAS ADDED");
+            PublishMessage(entity, "PRODUCT WAS ADDED");
         }
 
         public async Task UpdateAsync(Product entity)
@@ -52,7 +52,7 @@ namespace Products.Infrastructure.Repositories
 
         private void PublishMessage(Product produt, string message)
         {
-             _publisher.PublishMessage(new { Id = 1, Name = "Product A", Message = message });
+             _publisher.PublishMessage(new { Id = produt.Id, Name = produt.Name, Message = message });
         }
     }
 }
