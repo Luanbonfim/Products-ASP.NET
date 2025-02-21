@@ -64,3 +64,6 @@ yarn-error.log
 
 # Ignore all .db files (e.g., app.db, test.db, etc.)
 *.db
+
+#ignore .user file
+*.csproj.user
