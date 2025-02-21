@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Products.Application.Interfaces;
 using Products.Domain.Entities;
@@ -134,9 +135,21 @@ namespace Products.Test
             services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
             services.AddScoped<IProductRepository, ProductRepository>();
 
+            services.AddSingleton(GetConfiguration());
+
             var serviceProvider = services.BuildServiceProvider();
 
             return serviceProvider;
+        }
+
+        private IConfiguration GetConfiguration()
+        {
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())  
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)  
+                .Build();
+
+            return configuration;
         }
     }
 }
