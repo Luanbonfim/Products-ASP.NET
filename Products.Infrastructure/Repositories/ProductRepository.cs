@@ -31,7 +31,7 @@ namespace Products.Infrastructure.Repositories
             await _context.Set<Product>().AddAsync(entity);
             await _context.SaveChangesAsync();
 
-            PublishMessage(entity, "PRODUCT WAS ADDED");
+            await PublishMessage(entity, "PRODUCT WAS ADDED");
         }
 
         public async Task UpdateAsync(Product entity)
@@ -50,9 +50,9 @@ namespace Products.Infrastructure.Repositories
             }
         }
 
-        private void PublishMessage(Product produt, string message)
+        private async Task PublishMessage(Product produt, string message)
         {
-             _publisher.PublishMessage(new { Id = produt.Id, Name = produt.Name, Message = message });
+            await _publisher.PublishMessage(new { Id = produt.Id, Name = produt.Name, Message = message });
         }
     }
 }
