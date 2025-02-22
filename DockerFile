@@ -1,15 +1,30 @@
-# Use the official .NET SDK image to build the application
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+# Step 1: Set the base image (runtime image)
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
+EXPOSE 80
 
-# Copy the project files and restore dependencies
-COPY . . 
-RUN dotnet restore
-RUN dotnet publish -c Release -o /out
+# Step 2: Set up the build image
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
 
-# Use the official .NET runtime image to run the application
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+# Step 3: Copy the solution file and restore dependencies
+COPY ["Products.sln", "./"]
+
+# Step 4: Copy all project files to the container (this includes source code, configuration, etc.)
+COPY . .
+
+# Step 5: Restore dependencies using dotnet restore
+RUN dotnet restore Products.sln
+
+# Step 6: Build the solution
+RUN dotnet build Products.sln -c Release -o /app/build
+
+# Step 7: Publish the application
+FROM build AS publish
+RUN dotnet publish Products.sln -c Release -o /app/publish
+
+# Step 8: Set up the runtime image
+FROM base AS final
 WORKDIR /app
-COPY --from=build /out .
-EXPOSE 5000
-CMD ["dotnet", "ProductsAPI.dll"]
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "Products.API.dll"]
