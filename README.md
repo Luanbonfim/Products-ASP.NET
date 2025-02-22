@@ -21,7 +21,7 @@ A simple and secure RESTful API for managing products in an e-commerce or invent
 - **xUnit for unit testing**
 - **RabbitMQ for messaging service**
 - **DockerFile to containerize the application**
-- 
+  
 ## Prerequisites
 
 Before you can run this project, make sure you have the following installed on your system:
