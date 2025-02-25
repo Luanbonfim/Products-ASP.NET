@@ -10,7 +10,8 @@ A simple and secure RESTful API for managing products in an e-commerce or invent
 - **Swagger Documentation**: Auto-generated API documentation for easy exploration and testing.
 - **DDD**: Domain Driven Design for clean architecture.
 - **RabbitMQ**: Messaging for microservices architecture
-  
+- **DockerFile to create the image of the application**
+- 
 ## Technology Stack
 
 - **.NET 6** (or .NET Core)
@@ -20,7 +21,7 @@ A simple and secure RESTful API for managing products in an e-commerce or invent
 - **Identity for Authentication**
 - **xUnit for unit testing**
 - **RabbitMQ for messaging service**
-- **DockerFile to containerize the application**
+- **Docker to containerize the application**
   
 ## Prerequisites
 
@@ -29,6 +30,14 @@ Before you can run this project, make sure you have the following installed on y
 - [.NET SDK 6.0 or later](https://dotnet.microsoft.com/download/dotnet)
 - [SQLite](https://www.sqlite.org/)
 - A code editor such as [Visual Studio](https://visualstudio.microsoft.com/) or [VS Code](https://code.visualstudio.com/)
+
+- for running the application in a Docker container with HTTPS enabled, 
+you must create a certs folder in your project directory containing a valid localhost SSL/TLS certificate (e.g., a .pfx file).
+This certificate will be used to secure the communication between your application and clients through HTTPS.
+
+To generate a self-signed certificate for local development, you can use the following command:
+
+dotnet dev-certs https --trust
 
 ## Setup Instructions
 
