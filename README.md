@@ -11,7 +11,7 @@ A simple and secure RESTful API for managing products in an e-commerce or invent
 - **DDD**: Domain Driven Design for clean architecture.
 - **RabbitMQ**: Messaging for microservices architecture
 - **DockerFile to create the image of the application**
-- 
+  
 ## Technology Stack
 
 - **.NET 6** (or .NET Core)
@@ -31,16 +31,20 @@ Before you can run this project, make sure you have the following installed on y
 - [SQLite](https://www.sqlite.org/)
 - A code editor such as [Visual Studio](https://visualstudio.microsoft.com/) or [VS Code](https://code.visualstudio.com/)
 
-- for running the application in a Docker container with HTTPS enabled, 
+## Setup Instructions
+- In order for the database operations to work, it is necessary to run the **EF migrations**, I included the commands in the entrypoint.sh file
+  
+- To run the application in a Docker container with HTTPS enabled, 
 you must create a certs folder in your project directory containing a valid localhost SSL/TLS certificate (e.g., a .pfx file).
 This certificate will be used to secure the communication between your application and clients through HTTPS.
 
-To generate a self-signed certificate for local development, you can use the following command:
+  To generate a **self-signed certificate for local development**, you can use the following command:
+  dotnet dev-certs https --trust
 
-dotnet dev-certs https --trust
-
-## Setup Instructions
-
+Setup the env variables locally or when running the container:
+  CERTIFICATE_PATH = /path/your_cert.pfx
+  CERTIFICATE_PASSWORD = your_password
+  
 ### Clone the repository
 
 First, clone the repository to your local machine:
