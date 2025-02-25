@@ -10,6 +10,7 @@ using Products.Infrastructure.Messaging;
 using Products.Infrastructure.Persistence;
 using Products.Infrastructure.Repositories;
 using Products.Middlewares;
+using System.Security.Cryptography.X509Certificates;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -81,6 +82,23 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
+});
+
+builder.WebHost.UseUrls("http://0.0.0.0:5209", "https://0.0.0.0:7263");
+
+// Configure Kestrel to use the certificate from environment variables
+builder.WebHost.ConfigureKestrel(options =>
+{
+    var certificatePath = Environment.GetEnvironmentVariable("CERTIFICATE_PATH");
+    var certificatePassword = Environment.GetEnvironmentVariable("CERTIFICATE_PASSWORD");
+
+    if (!string.IsNullOrEmpty(certificatePath) && !string.IsNullOrEmpty(certificatePassword))
+    {
+        options.ConfigureHttpsDefaults(httpsOptions =>
+        {
+            httpsOptions.ServerCertificate = new X509Certificate2(certificatePath, certificatePassword);
+        });
+    }
 });
 
 var app = builder.Build();
