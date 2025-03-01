@@ -75,31 +75,14 @@ builder.Services.AddLogging();
 
 builder.Services.AddSingleton<LoggerHelper>();
 
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
-    .AddEntityFrameworkStores<UserDbContext>()
-    .AddDefaultTokenProviders();
-
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
-});
+ConfigureIdentity(builder);
 
 builder.WebHost.UseUrls("http://0.0.0.0:5209", "https://0.0.0.0:7263");
 
 // Configure Kestrel to use the certificate from environment variables
-builder.WebHost.ConfigureKestrel(options =>
-{
-    var certificatePath = Environment.GetEnvironmentVariable("CERTIFICATE_PATH");
-    var certificatePassword = Environment.GetEnvironmentVariable("CERTIFICATE_PASSWORD");
+ConfigureCertificates(builder);
 
-    if (!string.IsNullOrEmpty(certificatePath) && !string.IsNullOrEmpty(certificatePassword))
-    {
-        options.ConfigureHttpsDefaults(httpsOptions =>
-        {
-            httpsOptions.ServerCertificate = new X509Certificate2(certificatePath, certificatePassword);
-        });
-    }
-});
+ConfigureCors(builder);
 
 var app = builder.Build();
 
@@ -115,6 +98,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseCors("AllowAngularApp");
 // Use the logging middleware
 app.UseMiddleware<LoggingMiddleware>();
 
@@ -122,3 +106,47 @@ app.UseMiddleware<LoggingMiddleware>();
 app.MapControllers();
 
 app.Run();
+
+void ConfigureCertificates(WebApplicationBuilder builder)
+{
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        var certificatePath = Environment.GetEnvironmentVariable("CERTIFICATE_PATH");
+        var certificatePassword = Environment.GetEnvironmentVariable("CERTIFICATE_PASSWORD");
+
+        if (!string.IsNullOrEmpty(certificatePath) && !string.IsNullOrEmpty(certificatePassword))
+        {
+            options.ConfigureHttpsDefaults(httpsOptions =>
+            {
+                httpsOptions.ServerCertificate = new X509Certificate2(certificatePath, certificatePassword);
+            });
+        }
+    });
+}
+
+void ConfigureCors(WebApplicationBuilder builder)
+{
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("AllowAngularApp",
+            builder =>
+            {
+                builder.WithOrigins("http://localhost:4200", "http://localhost:51253") // Replace with your Angular app's URL
+                       .AllowAnyHeader()
+                       .AllowAnyMethod()
+                       .AllowCredentials(); // Allow credentials (cookies)
+            });
+    });
+}
+
+static void ConfigureIdentity(WebApplicationBuilder builder)
+{
+    builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+        .AddEntityFrameworkStores<UserDbContext>()
+        .AddDefaultTokenProviders();
+
+    builder.Services.AddAuthorization(options =>
+    {
+        options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
+    });
+}

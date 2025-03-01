@@ -6,6 +6,6 @@ namespace Products.Application.Interfaces
     {
         Task<OperationResult> CreateUserAsync(string username, string password, string role);
         Task<OperationResult> AssignRoleToUserAsync(string userId, string role);
-        Task<OperationResult> LoginAsync(string userName, string password);
+        Task<OperationResult> LoginAsync(string email, string password);
     }
 }
