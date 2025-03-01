@@ -42,9 +42,9 @@ namespace Products.Infrastructure.Identity
             return new OperationResult("User not found", false);
         }
 
-        public async Task<OperationResult> LoginAsync(string userName, string password)
+        public async Task<OperationResult> LoginAsync(string email, string password)
         {
-            var user = await _userManager.FindByNameAsync(userName);
+            var user = await _userManager.FindByNameAsync(email);
 
             if (user == null)
             {
