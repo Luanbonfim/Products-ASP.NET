@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Products.Application.Interfaces;
 using Products.Common;
+using System.Security.Claims;
 
 namespace Products.Infrastructure.Identity
 {
@@ -71,6 +73,25 @@ namespace Products.Infrastructure.Identity
                 IsSuccess = true,
                 Message = "Login successful"
             };
+        }
+
+        public async Task<bool> IsSignedIn(ClaimsPrincipal user)
+        {
+            return await Task.FromResult(_signInManager.IsSignedIn(user));
+        }
+
+        public async Task<OperationResult> LogOut()
+        {
+            try
+            {
+                await _signInManager.SignOutAsync();
+
+                return new OperationResult("Successful logout", true);
+            }
+            catch (Exception ex)
+            {
+                return new OperationResult(ex.Message, false);
+            }
         }
     }
 }

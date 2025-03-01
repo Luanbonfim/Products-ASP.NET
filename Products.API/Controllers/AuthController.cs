@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Products.Application.Interfaces;
 using Products.Common.Helpers;
 using Products.Domain.Entities;
@@ -44,7 +45,10 @@ namespace Products.Controllers
                 return BadRequest("Invalid user data.");
             }
 
-            var result = await _identityService.CreateUserAsync(user.Email, user.Password,"Admin");
+            var passwordHasher = new PasswordHasher<User>();
+            string hashedPassword = passwordHasher.HashPassword(user, user.Password);
+
+            var result = await _identityService.CreateUserAsync(user.Email, hashedPassword, "Admin");
 
             if (result.IsSuccess)
             {
@@ -54,6 +58,33 @@ namespace Products.Controllers
 
             _loggerHelper.LogMessage(LogLevelType.Error, $"Error creating user {user.Email}: {string.Join(", ", result.Errors)}");
             return BadRequest(result.Errors);
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var result = await _identityService.LogOut();
+
+            if (result.IsSuccess)
+                return Ok(new { Message = "Logged out successfully" });
+            else
+                return BadRequest("Internal Server Error");
+        }
+
+        [HttpGet("checkauth")]
+        public async Task<IActionResult> CheckAuth()
+        {
+            var IsSignedIn = await _identityService.IsSignedIn(HttpContext.User);
+
+            if (IsSignedIn)
+            {
+                var userName = HttpContext.User.Identity.Name;
+                return Ok(new { message = "User is authenticated", userName });
+            }
+            else
+            {
+                return Unauthorized(new { message = "User is not authenticated" });
+            }
         }
     }
 }
