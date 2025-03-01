@@ -131,7 +131,7 @@ void ConfigureCors(WebApplicationBuilder builder)
         options.AddPolicy("AllowAngularApp",
             builder =>
             {
-                builder.WithOrigins("http://localhost:4200", "http://localhost:51253") // Replace with your Angular app's URL
+                builder.WithOrigins("http://localhost:4200", "http://localhost:51253", "http://localhost:54143") // Replace with your Angular app's URL
                        .AllowAnyHeader()
                        .AllowAnyMethod()
                        .AllowCredentials(); // Allow credentials (cookies)
