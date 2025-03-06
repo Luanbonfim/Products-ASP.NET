@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Products.Application.Interfaces;
 using Products.Common.Helpers;
@@ -37,7 +39,6 @@ namespace Products.Controllers
         }
 
         [HttpPost("createuser")]
-        //[Authorize]
         public async Task<IActionResult> CreateUser([FromBody] User user)
         {
             if (user == null)
@@ -85,6 +86,39 @@ namespace Products.Controllers
             {
                 return Unauthorized(new { message = "User is not authenticated" });
             }
+        }
+
+        [HttpGet("google-login")]
+        public async Task<IActionResult> GoogleLogin()
+        {
+            try
+            {
+                var redirectUrl = Url.Action(nameof(GoogleResponse), "auth");
+
+                var properties = await _identityService.GetGoogleLoginProperties(redirectUrl);
+
+                return new ChallengeResult("Google", (AuthenticationProperties)properties);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Internal Server Error");
+            }
+        }
+
+        [HttpGet("google-response")]
+        public async Task<IActionResult> GoogleResponse()
+        {   
+            var result = await _identityService.GetGoogleResponse();
+            
+            if (result.IsSuccess)
+            {
+                return Redirect("/"); // Redirect to home page
+            }
+            else
+            {
+                return BadRequest("Error creating user.");
+            }
+            
         }
     }
 }
