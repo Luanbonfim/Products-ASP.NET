@@ -9,7 +9,8 @@ A simple and secure RESTful API for managing products in an e-commerce or invent
 - **Logging**: Centralized logging and Middleware for tracking API requests and errors.
 - **Swagger Documentation**: Auto-generated API documentation for easy exploration and testing.
 - **DDD**: Domain Driven Design for clean architecture.
-- **RabbitMQ**: Messaging for microservices architecture
+- **RabbitMQ**: Messaging for microservices architecture.
+- **Google oAuth**: authentication through google oAuth.
   
 ## Technology Stack
 
@@ -21,6 +22,7 @@ A simple and secure RESTful API for managing products in an e-commerce or invent
 - **xUnit for unit testing**
 - **RabbitMQ for messaging service**
 - **DockerFile to containerize the application**
+- **oAuth 2.0 to allow third party login**
   
 ## Prerequisites
 
