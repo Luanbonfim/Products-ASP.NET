@@ -10,5 +10,7 @@ namespace Products.Application.Interfaces
         Task<OperationResult> LoginAsync(string email, string password);
         Task<bool> IsSignedIn(ClaimsPrincipal user);
         Task<OperationResult> LogOut();
+        Task<Object> GetGoogleLoginProperties(string redirectUrl);
+        Task<OperationResult> GetGoogleResponse();
     }
 }

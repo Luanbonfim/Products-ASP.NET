@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -24,38 +25,21 @@ builder.Services.AddDbContext<UserDbContext>(options =>
                 options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 //// Add Cookies based Authentication
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-           .AddCookie();
-
-// Add Swagger for API documentation
-builder.Services.AddSwaggerGen(c =>
+builder.Services.AddAuthentication(options =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+})
+.AddCookie()
+.AddGoogle(options =>
+           {
+               options.ClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
+               options.ClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
+           });
 
-    // Add Cookie Authentication in Swagger
-    c.AddSecurityDefinition("cookieAuth", new OpenApiSecurityScheme
-    {
-        Name = "Cookie",
-        Type = SecuritySchemeType.ApiKey,
-        In = ParameterLocation.Cookie,
-        Description = "ASP.NET Identity Cookie Authentication"
-    });
 
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "cookieAuth"
-                }
-            },
-            new List<string>()
-        }
-    });
-});
+
+ConfigureSwagger(builder);
 
 // Add controllers
 builder.Services.AddControllers();
@@ -92,13 +76,14 @@ app.UseSwaggerUI();  // Adds Swagger UI for browsing the API
 
 app.UseHttpsRedirection();
 
+app.UseCors("AllowAngularApp");
 app.UseRouting();
 
 // Enable authentication and authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseCors("AllowAngularApp");
+
 // Use the logging middleware
 app.UseMiddleware<LoggingMiddleware>();
 
@@ -131,7 +116,7 @@ void ConfigureCors(WebApplicationBuilder builder)
         options.AddPolicy("AllowAngularApp",
             builder =>
             {
-                builder.WithOrigins("http://localhost:4200", "http://localhost:51253", "http://localhost:54143") // Replace with your Angular app's URL
+                builder.WithOrigins("http://localhost:4200", "https://localhost:7263", "http://localhost:51253", "http://localhost:54143") // Replace with your Angular app's URL
                        .AllowAnyHeader()
                        .AllowAnyMethod()
                        .AllowCredentials(); // Allow credentials (cookies)
@@ -139,7 +124,7 @@ void ConfigureCors(WebApplicationBuilder builder)
     });
 }
 
-static void ConfigureIdentity(WebApplicationBuilder builder)
+void ConfigureIdentity(WebApplicationBuilder builder)
 {
     builder.Services.AddIdentity<IdentityUser, IdentityRole>()
         .AddEntityFrameworkStores<UserDbContext>()
@@ -148,5 +133,72 @@ static void ConfigureIdentity(WebApplicationBuilder builder)
     builder.Services.AddAuthorization(options =>
     {
         options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
+    });
+}
+
+void ConfigureSwagger(WebApplicationBuilder builder)
+{
+    // Add Swagger for API documentation
+    builder.Services.AddSwaggerGen(c =>
+    {
+        c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+
+        // Add Cookie Authentication in Swagger
+        c.AddSecurityDefinition("cookieAuth", new OpenApiSecurityScheme
+        {
+            Name = "Cookie",
+            Type = SecuritySchemeType.ApiKey,
+            In = ParameterLocation.Cookie,
+            Description = "ASP.NET Identity Cookie Authentication"
+        });
+
+        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "cookieAuth"
+                }
+            },
+            new List<string>()
+        }
+        });
+
+        c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.OAuth2,
+            Flows = new OpenApiOAuthFlows
+            {
+                AuthorizationCode = new OpenApiOAuthFlow
+                {
+                    AuthorizationUrl = new Uri("https://accounts.google.com/o/oauth2/auth"),
+                    TokenUrl = new Uri("https://oauth2.googleapis.com/token"),
+                    Scopes = new Dictionary<string, string>
+                    {
+                    { "openid", "OpenID scope" },
+                    { "profile", "Profile scope" },
+                    { "email", "Email scope" }
+                    }
+                }
+            }
+        });
+
+        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "oauth2"
+                }
+            },
+            new List<string>()
+        }
+        });
     });
 }

@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Products.Application.Interfaces;
 using Products.Common;
+using Products.Domain.Entities;
 using System.Security.Claims;
+using System.Security.Policy;
 
 namespace Products.Infrastructure.Identity
 {
@@ -92,6 +95,60 @@ namespace Products.Infrastructure.Identity
             {
                 return new OperationResult(ex.Message, false);
             }
+        }
+        
+        public async Task<Object> GetGoogleLoginProperties(string redirectUrl)
+        {
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties("Google", redirectUrl);
+
+            return properties;
+        }
+
+        public async Task<OperationResult> GetGoogleResponse()
+        {
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+            if (info == null)
+            {
+                return new OperationResult("Error loading external login information.", false);
+            }
+
+            // Try to sign in using external login
+            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false);
+            if (result.Succeeded)
+            {
+                return new OperationResult("Login successful", true);
+            }
+
+            // Check if user already exists in Identity (but without Google login linked)
+            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+            {
+                // User does not exist, create a new one
+                user = new IdentityUser
+                {
+                    UserName = email,
+                    Email = email
+                };
+
+                var createResult = await _userManager.CreateAsync(user);
+                if (!createResult.Succeeded)
+                {
+                    return new OperationResult("Error creating user.", false);
+                }
+            }
+
+            // Link Google login to existing user
+            var addLoginResult = await _userManager.AddLoginAsync(user, info);
+            if (!addLoginResult.Succeeded)
+            {
+                return new OperationResult("Error linking Google account.", false);
+            }
+
+            // Sign in the user
+            await _signInManager.SignInAsync(user, isPersistent: false);
+            return new OperationResult("Login successful", true);
         }
     }
 }
