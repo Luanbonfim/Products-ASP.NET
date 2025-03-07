@@ -1,11 +1,7 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Products.Application.Interfaces;
 using Products.Common;
-using Products.Domain.Entities;
 using System.Security.Claims;
-using System.Security.Policy;
 
 namespace Products.Infrastructure.Identity
 {
@@ -13,6 +9,8 @@ namespace Products.Infrastructure.Identity
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
+        private const string LOGIN_SUCCESSFUL_MESSAGE = "Login successful";
+        private const string USER_NOT_FOUND_MESSAGE = "User not found";
 
         public IdentityService(UserManager<IdentityUser> userManager, 
                                SignInManager<IdentityUser> signInManager)
@@ -44,7 +42,7 @@ namespace Products.Infrastructure.Identity
                     ? new OperationResult("Role assigned successfully")
                     : new OperationResult(result.Errors.Select(e => e.Description));
             }
-            return new OperationResult("User not found", false);
+            return new OperationResult(USER_NOT_FOUND_MESSAGE, false);
         }
 
         public async Task<OperationResult> LoginAsync(string email, string password)
@@ -56,7 +54,7 @@ namespace Products.Infrastructure.Identity
                 return new OperationResult
                 {
                     IsSuccess = false,
-                    Message = "User not found"
+                    Message = USER_NOT_FOUND_MESSAGE
                 };
             }
 
@@ -74,7 +72,7 @@ namespace Products.Infrastructure.Identity
             return new OperationResult
             {
                 IsSuccess = true,
-                Message = "Login successful"
+                Message = LOGIN_SUCCESSFUL_MESSAGE
             };
         }
 
@@ -116,7 +114,7 @@ namespace Products.Infrastructure.Identity
             var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false);
             if (result.Succeeded)
             {
-                return new OperationResult("Login successful", true);
+                return new OperationResult(LOGIN_SUCCESSFUL_MESSAGE, true);
             }
 
             // Check if user already exists in Identity (but without Google login linked)
@@ -148,7 +146,7 @@ namespace Products.Infrastructure.Identity
 
             // Sign in the user
             await _signInManager.SignInAsync(user, isPersistent: false);
-            return new OperationResult("Login successful", true);
+            return new OperationResult(LOGIN_SUCCESSFUL_MESSAGE, true);
         }
     }
 }
