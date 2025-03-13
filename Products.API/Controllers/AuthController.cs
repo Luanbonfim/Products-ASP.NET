@@ -89,13 +89,13 @@ namespace Products.Controllers
         }
 
         [HttpGet("google-login")]
-        public async Task<IActionResult> GoogleLogin()
+        public async Task<IActionResult> GoogleLogin([FromQuery] string redirectUrl)
         {
             try
             {
-                var redirectUrl = Url.Action(nameof(GoogleResponse), "auth");
+                var redirectActionEndpoint = Url.Action(nameof(GoogleResponse), "auth", new { redirectUrl });
 
-                var properties = await _identityService.GetGoogleLoginProperties(redirectUrl);
+                var properties = await _identityService.GetGoogleLoginProperties(redirectActionEndpoint);
 
                 return new ChallengeResult("Google", (AuthenticationProperties)properties);
             }
@@ -106,13 +106,14 @@ namespace Products.Controllers
         }
 
         [HttpGet("google-response")]
-        public async Task<IActionResult> GoogleResponse()
+        public async Task<IActionResult> GoogleResponse([FromQuery] string redirectUrl)
         {   
             var result = await _identityService.GetGoogleResponse();
             
             if (result.IsSuccess)
             {
-                return Redirect("/"); // Redirect to home page
+                var defaultRedirectUrl = _config.GetValue<string>("Auth:DefaultRedirectUrl");
+                return Redirect(redirectUrl ?? defaultRedirectUrl);
             }
             else
             {
