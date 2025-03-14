@@ -24,11 +24,11 @@ namespace Products.Infrastructure.Persistence
                 .Property(p => p.Id)
                 .ValueGeneratedOnAdd();
 
-            // Seed data without specifying Ids
+            // Seed data with explicit IDs
             modelBuilder.Entity<Product>().HasData(
-               new Product("Laptop", 999.99M),
-               new Product("Smartphone", 499.99M),
-               new Product("Headphones", 79.99M)
+               new { Id = 1, Name = "Laptop", Price = 999.99M },
+               new { Id = 2, Name = "Smartphone", Price = 499.99M },
+               new { Id = 3, Name = "Headphones", Price = 79.99M }
             );
 
             base.OnModelCreating(modelBuilder);

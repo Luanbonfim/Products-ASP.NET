@@ -1,21 +1,24 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Products.Application.DTOs;
 using Products.Application.Interfaces;
+using Products.Common.Helpers;
 using Products.Domain.Entities;
+using Products.Domain.Interfaces;
 using Products.Infrastructure.Messaging;
 using Products.Infrastructure.Persistence;
 using Products.Infrastructure.Repositories;
-using Products.Tests;
 using Xunit;
 
-namespace Products.Test
+namespace Products.Tests
 {
     public class ProductRepositoryTests
     {
         private readonly DbContextOptions<ProductsDbContext> _options;
         private readonly IProductRepository _repository;
         private const string USERS_DATABASE_TEST = "TestDatabase";
+
         public ProductRepositoryTests()
         {
             _options = Helper.GetInMemoryOptions<ProductsDbContext>(USERS_DATABASE_TEST);
@@ -23,7 +26,7 @@ namespace Products.Test
             var serviceProvider = SetupTestServiceProvider();
             _repository = serviceProvider.GetRequiredService<IProductRepository>();
 
-            SeedInitialData();
+            SeedInitialData().GetAwaiter().GetResult();
         }
 
         [Fact]
@@ -31,64 +34,81 @@ namespace Products.Test
         {
             // Arrange
 
-
             // Act
-            var products = await _repository.GetAllAsync();
+            var result = await _repository.GetAllAsync();
 
             // Assert
-            Assert.True(products.Count() > 0);
+            Assert.True(result.IsSuccess);
+            Assert.True(result.Data.Count() > 0);
+            Assert.All(result.Data, item => Assert.IsType<ProductDto>(item));
         }
 
         [Fact]
         public async Task GetByIdAsync_ReturnsProductById()
         {
             //Arrange
-            int id = 1;
+            var products = await _repository.GetAllAsync();
+            var firstProduct = products.Data.First();
 
-            //Act 
-            var product = await _repository.GetByIdAsync(id);
+            //Act
+            var result = await _repository.GetByIdAsync(firstProduct?.Id ?? 0);
 
             // Assert: 
-            Assert.NotNull(product);
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.IsType<ProductDto>(result.Data);
+            Assert.Equal(firstProduct.Id, result.Data.Id);
         }
 
         [Fact]
-        public async Task AddAsync_AddsAProduc()
+        public async Task AddAsync_AddsAProduct()
         {
             //Arrange
-            var newProduct = new Product { Id = 3, Name = "Test Product 3", Price = 100 };
+            var newProduct = new ProductDto { Name = "Test Product 3", Price = 100 };
 
             //Act 
+            var result = await _repository.AddAsync(newProduct);
+
+            // Assert: 
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(newProduct.Name, result.Data.Name);
+            Assert.Equal(newProduct.Price, result.Data.Price);
+
+            // Verify in database
             using (var context = new ProductsDbContext(_options))
             {
-                await _repository.AddAsync(newProduct);
-
-                var addedProduct = context.Products.First(p => p.Id == newProduct.Id);
-
-                // Assert: 
+                var addedProduct = await context.Products.FirstOrDefaultAsync(p => p.Id == result.Data.Id);
                 Assert.NotNull(addedProduct);
+                Assert.Equal(newProduct.Name, addedProduct.Name);
+                Assert.Equal(newProduct.Price, addedProduct.Price);
             }
         }
 
         [Fact]
-        public async Task UpdateAsync_UpdatesAnExisistingProduct()
+        public async Task UpdateAsync_UpdatesAnExistingProduct()
         {
             //Arrange 
-            var product = new Product();
+            var products = await _repository.GetAllAsync();
+            var productToUpdate = products.Data.First();
+            productToUpdate.Name = "Updated Product";
+            productToUpdate.Price = 150;
+
             //Act
+            var result = await _repository.UpdateAsync(productToUpdate);
+
+            // Assert: 
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Data);
+            Assert.Equal(productToUpdate.Name, result.Data.Name);
+            Assert.Equal(productToUpdate.Price, result.Data.Price);
+
+            // Verify in database
             using (var context = new ProductsDbContext(_options))
             {
-                product = context.Products.First();
-                product.Id = 1;
-                product.Name = "Updated Product";
-                product.Price = 150;
-
-                await _repository.UpdateAsync(product);
-
-                var updatedProduct = context.Products.First(p => p.Id == product.Id);
-
-                // Assert: 
-                Assert.NotNull(updatedProduct);
+                var updatedProduct = await context.Products.FirstAsync(p => p.Id == productToUpdate.Id);
+                Assert.Equal(productToUpdate.Name, updatedProduct.Name);
+                Assert.Equal(productToUpdate.Price, updatedProduct.Price);
             }
         }
 
@@ -96,33 +116,38 @@ namespace Products.Test
         public async Task DeleteAsync_DeletesAnExistingProductById()
         {
             //Arrange 
-
-            //Act
+            int idToDelete;
             using (var context = new ProductsDbContext(_options))
             {
-                var productToDelete = context.Products.First();
+                var productToDelete = await context.Products.FirstAsync();
+                idToDelete = productToDelete.Id;
+            }
 
-                await _repository.DeleteAsync(productToDelete.Id);
+            //Act
+            var result = await _repository.DeleteAsync(idToDelete);
 
-                var isDeletedProductFound = context.Products.Any(p => p.Id == productToDelete.Id);
-
-                // Assert
+            // Assert
+            Assert.True(result.IsSuccess);
+            
+            // Verify in database
+            using (var context = new ProductsDbContext(_options))
+            {
+                var isDeletedProductFound = await context.Products.AnyAsync(p => p.Id == idToDelete);
                 Assert.False(isDeletedProductFound);
             }
         }
 
-        private async void SeedInitialData()
+        private async Task SeedInitialData()
         {
-
-            var productsList = new List<Product>{
-                                                new Product { Id = 1, Name = "Test Product", Price = 100 },
-                                                new Product { Id = 2, Name = "Test Product 2", Price = 100 }
-                                            };
-
-            using (var context = new ProductsDbContext(_options))
+            var productsList = new List<ProductDto>
             {
-                context.Products.AddRange(productsList);
-                await context.SaveChangesAsync();
+                new ProductDto { Name = "Test Product", Price = 100 },
+                new ProductDto { Name = "Test Product 2", Price = 100 }
+            };
+
+            foreach (var product in productsList)
+            {
+                await _repository.AddAsync(product);
             }
         }
 
@@ -133,6 +158,8 @@ namespace Products.Test
             services.AddDbContext<ProductsDbContext>(options => options.UseInMemoryDatabase(USERS_DATABASE_TEST));
 
             services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
+            services.AddLogging();
+            services.AddSingleton<LoggerHelper>();
             services.AddScoped<IProductRepository, ProductRepository>();
 
             services.AddSingleton(GetConfiguration());
