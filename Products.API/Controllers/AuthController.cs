@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Identity;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Products.Application.DTOs;
 using Products.Application.Interfaces;
@@ -7,7 +7,8 @@ using Products.Application.Interfaces;
 namespace Products.Controllers
 {
     [ApiController]
-    [Route("api/auth")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/auth")]
     public class AuthController : ControllerBase
     {
         private readonly IConfiguration _config;
@@ -20,6 +21,7 @@ namespace Products.Controllers
         }
 
         [HttpPost("login")]
+        [MapToApiVersion("1.0")]
         public async Task<IActionResult> Login([FromBody] LoginDto request)
         {
             if (request == null)
@@ -36,6 +38,7 @@ namespace Products.Controllers
         }
 
         [HttpPost("createuser")]
+        [MapToApiVersion("1.0")]
         public async Task<IActionResult> CreateUser([FromBody] UserDto user)
         {
             if (user == null)
@@ -54,6 +57,7 @@ namespace Products.Controllers
         }
 
         [HttpPost("logout")]
+        [MapToApiVersion("1.0")]
         public async Task<IActionResult> Logout()
         {
             var result = await _identityService.LogOut();
@@ -65,6 +69,7 @@ namespace Products.Controllers
         }
 
         [HttpGet("checkauth")]
+        [MapToApiVersion("1.0")]
         public async Task<IActionResult> CheckAuth()
         {
             var IsSignedIn = await _identityService.IsSignedIn(HttpContext.User);
@@ -81,6 +86,7 @@ namespace Products.Controllers
         }
 
         [HttpGet("google-login")]
+        [MapToApiVersion("1.0")]
         public async Task<IActionResult> GoogleLogin([FromQuery] string redirectUrl)
         {
             try
@@ -98,6 +104,7 @@ namespace Products.Controllers
         }
 
         [HttpGet("google-response")]
+        [MapToApiVersion("1.0")]
         public async Task<IActionResult> GoogleResponse([FromQuery] string redirectUrl)
         {   
             var result = await _identityService.GetGoogleResponse();
