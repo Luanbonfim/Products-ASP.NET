@@ -4,7 +4,7 @@
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace Products.Infrastructure.Migrations
+namespace Products.Infrastructure.Migrations.ProductsDb
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

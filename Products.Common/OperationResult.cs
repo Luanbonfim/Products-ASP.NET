@@ -1,33 +1,39 @@
 ﻿namespace Products.Common
 {
-    public class OperationResult
+    public class OperationResult<T>
     {
         public bool IsSuccess { get; set; }
         public string Message { get; set; }
-
+        public T Data { get; set; }
         public List<string> Errors { get; set; } = new List<string>();
 
-        public OperationResult()
+        public static OperationResult<T> Success(T data, string message = null)
         {
-            IsSuccess = true; 
+            return new OperationResult<T>
+            {
+                IsSuccess = true,
+                Data = data,
+                Message = message
+            };
         }
 
-        public OperationResult(string message)
+        public static OperationResult<T> Failure(string error)
         {
-            IsSuccess = true;
-            Message = message;
+            return new OperationResult<T>
+            {
+                IsSuccess = false,
+                Errors = new List<string> { error }
+            };
         }
 
-        public OperationResult(string message, bool isSuccess)
+        public static OperationResult<T> NotFound(string message = "Resource not found")
         {
-            Message = message;
-            IsSuccess = isSuccess;
-        }
-
-        public OperationResult(IEnumerable<string> errors)
-        {
-            IsSuccess = false;
-            Errors.AddRange(errors);
+            return new OperationResult<T>
+            {
+                IsSuccess = false,
+                Message = message,
+                Errors = new List<string> { message }
+            };
         }
     }
 }

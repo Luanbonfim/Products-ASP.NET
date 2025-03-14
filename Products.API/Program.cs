@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Products.Application.Interfaces;
-using Products.Application.Services_;
 using Products.Common.Helpers;
+using Products.Domain.Interfaces;
 using Products.Infrastructure.Identity;
 using Products.Infrastructure.Messaging;
 using Products.Infrastructure.Persistence;
@@ -37,8 +37,6 @@ builder.Services.AddAuthentication(options =>
                options.ClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
            });
 
-
-
 ConfigureSwagger(builder);
 
 // Add controllers
@@ -46,8 +44,6 @@ builder.Services.AddControllers();
 
 //DIs
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
-
-builder.Services.AddScoped<IProductService, ProductService>();
 
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 

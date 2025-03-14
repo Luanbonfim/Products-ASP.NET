@@ -8,11 +8,11 @@ using Products.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace Products.Infrastructure.Migrations.UserDb
+namespace Products.Infrastructure.Migrations
 {
     [DbContext(typeof(UserDbContext))]
-    [Migration("20250211180950_InitialUserMigration")]
-    partial class InitialUserMigration
+    [Migration("20250314143924_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

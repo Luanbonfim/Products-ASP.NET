@@ -7,7 +7,7 @@ using Products.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace Products.Infrastructure.Migrations.UserDb
+namespace Products.Infrastructure.Migrations
 {
     [DbContext(typeof(UserDbContext))]
     partial class UserDbContextModelSnapshot : ModelSnapshot
