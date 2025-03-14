@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Products.Domain.Entities;
-using Products.Common.Helpers;
-using Products.Application.Interfaces;
+using Products.Application.DTOs;
+using Products.Domain.Interfaces;
 
 namespace Products.Controllers
 {
@@ -11,107 +10,69 @@ namespace Products.Controllers
     [Authorize]
     public class ProductsController : ControllerBase
     {
-        private readonly IProductService _productService;
-        private readonly LoggerHelper _loggerHelper;
-        public ProductsController(IProductService productService, LoggerHelper loggerHelper)
+        private readonly IProductRepository _productRepository;
+
+        public ProductsController(IProductRepository productRepository)
         {
-            _productService = productService;
-            _loggerHelper = loggerHelper;
+            _productRepository = productRepository;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            _loggerHelper.LogMessage(LogLevelType.Information, "Fetching all products.");
+            var result = await _productRepository.GetAllAsync();
+            
+            if (!result.IsSuccess)
+                return StatusCode(500, result.Message);
 
-            try
-            {
-                var products = await _productService.GetAllProductsAsync();
-
-                return Ok(products);
-            }
-            catch (Exception ex)
-            {
-                return LogError(ex);
-            }
+            return Ok(result.Data);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            _loggerHelper.LogMessage(LogLevelType.Information, $"Fetching a product by ID: {id}.");
+            var result = await _productRepository.GetByIdAsync(id);
 
-            try
-            {
-                var product = await _productService.GetProductByIdAsync(id);
+            if (!result.IsSuccess)
+                return result.Message.Contains("not found") ? NotFound(result.Message) : StatusCode(500, result.Message);
 
-                if (product == null)
-                    return NotFound();
-
-                return Ok(product);
-            }
-            catch (Exception ex)
-            {
-                return LogError(ex);
-            }
+            return Ok(result.Data);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Add(Product product)
+        public async Task<IActionResult> Add(ProductDto productDto)
         {
-            _loggerHelper.LogMessage(LogLevelType.Information, $"Adding product ID: {product.Id}.");
+            var result = await _productRepository.AddAsync(productDto);
 
-            try
-            {
-                await _productService.AddProductAsync(product);
-                return StatusCode(201);
-            }
-            catch (Exception ex)
-            {
-                return LogError(ex);
-            }
+            if (!result.IsSuccess)
+                return StatusCode(500, result.Message);
+
+            return StatusCode(201, result.Data);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, Product product)
+        public async Task<IActionResult> Update(int id, ProductDto productDto)
         {
-            _loggerHelper.LogMessage(LogLevelType.Information, $"Updating product ID: {product.Id}.");
+            if (id != productDto.Id)
+                return BadRequest("ID mismatch");
 
-            try
-            {
+            var result = await _productRepository.UpdateAsync(productDto);
 
-                if (id != product.Id) return BadRequest();
-                await _productService.UpdateProductAsync(product);
+            if (!result.IsSuccess)
+                return result.Message.Contains("not found") ? NotFound(result.Message) : StatusCode(500, result.Message);
 
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return LogError(ex);
-            }
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                _loggerHelper.LogMessage(LogLevelType.Information, $"Deleting product ID: {id}.");
+            var result = await _productRepository.DeleteAsync(id);
 
-                await _productService.DeleteProductAsync(id);
-                return NoContent();
-            }
-            catch (Exception ex)
-            {
-                return LogError(ex);
-            }
-        }
+            if (!result.IsSuccess)
+                return result.Message.Contains("not found") ? NotFound(result.Message) : StatusCode(500, result.Message);
 
-        private IActionResult LogError(Exception ex)
-        {
-            _loggerHelper.LogMessage(LogLevelType.Error, ex.Message);
-
-            return StatusCode(500, "Internal server error");
+            return NoContent();
         }
     }
 }

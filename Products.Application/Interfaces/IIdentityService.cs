@@ -1,16 +1,17 @@
-﻿using Products.Common;
+﻿using Products.Application.DTOs;
+using Products.Common;
 using System.Security.Claims;
 
 namespace Products.Application.Interfaces
 {
     public interface IIdentityService
     {
-        Task<OperationResult> CreateUserAsync(string username, string password, string role);
-        Task<OperationResult> AssignRoleToUserAsync(string userId, string role);
-        Task<OperationResult> LoginAsync(string email, string password);
+        Task<OperationResult<string>> CreateUserAsync(UserDto userDto, string role);
+        Task<OperationResult<bool>> AssignRoleToUserAsync(string userId, string role);
+        Task<OperationResult<bool>> LoginAsync(string email, string password);
         Task<bool> IsSignedIn(ClaimsPrincipal user);
-        Task<OperationResult> LogOut();
-        Task<Object> GetGoogleLoginProperties(string redirectUrl);
-        Task<OperationResult> GetGoogleResponse();
+        Task<OperationResult<bool>> LogOut();
+        Task<OperationResult<object>> GetGoogleLoginProperties(string redirectUrl);
+        Task<OperationResult<bool>> GetGoogleResponse();
     }
 }

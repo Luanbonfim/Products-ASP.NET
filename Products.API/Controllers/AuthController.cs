@@ -1,10 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Products.Application.DTOs;
 using Products.Application.Interfaces;
-using Products.Common.Helpers;
-using Products.Domain.Entities;
 
 namespace Products.Controllers
 {
@@ -14,16 +12,15 @@ namespace Products.Controllers
     {
         private readonly IConfiguration _config;
         private readonly IIdentityService _identityService;
-        private readonly LoggerHelper _loggerHelper;
-        public AuthController(IConfiguration config, IIdentityService identityService, ILogger<AuthController> logger, LoggerHelper loggerHelper)
+
+        public AuthController(IConfiguration config, IIdentityService identityService)
         {
             _config = config;
             _identityService = identityService;
-            _loggerHelper = loggerHelper;
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] User request)
+        public async Task<IActionResult> Login([FromBody] LoginDto request)
         {
             if (request == null)
             {
@@ -39,25 +36,20 @@ namespace Products.Controllers
         }
 
         [HttpPost("createuser")]
-        public async Task<IActionResult> CreateUser([FromBody] User user)
+        public async Task<IActionResult> CreateUser([FromBody] UserDto user)
         {
             if (user == null)
             {
                 return BadRequest("Invalid user data.");
             }
 
-            var passwordHasher = new PasswordHasher<User>();
-            string hashedPassword = passwordHasher.HashPassword(user, user.Password);
-
-            var result = await _identityService.CreateUserAsync(user.Email, hashedPassword, "Admin");
+            var result = await _identityService.CreateUserAsync(user, "Admin");
 
             if (result.IsSuccess)
             {
-                _loggerHelper.LogMessage(LogLevelType.Information, $"User {user.Email} created successfully with role Admin");
                 return StatusCode(201);
             }
 
-            _loggerHelper.LogMessage(LogLevelType.Error, $"Error creating user {user.Email}: {string.Join(", ", result.Errors)}");
             return BadRequest(result.Errors);
         }
 
@@ -97,9 +89,9 @@ namespace Products.Controllers
 
                 var properties = await _identityService.GetGoogleLoginProperties(redirectActionEndpoint);
 
-                return new ChallengeResult("Google", (AuthenticationProperties)properties);
+                return new ChallengeResult("Google", (AuthenticationProperties)properties.Data);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return BadRequest("Internal Server Error");
             }
@@ -119,7 +111,6 @@ namespace Products.Controllers
             {
                 return BadRequest("Error creating user.");
             }
-            
         }
     }
 }

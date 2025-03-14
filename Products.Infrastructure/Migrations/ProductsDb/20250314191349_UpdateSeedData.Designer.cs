@@ -7,11 +7,11 @@ using Products.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace Products.Infrastructure.Migrations
+namespace Products.Infrastructure.Migrations.ProductsDb
 {
     [DbContext(typeof(ProductsDbContext))]
-    [Migration("20250210214722_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250314191349_UpdateSeedData")]
+    partial class UpdateSeedData
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -19,7 +19,7 @@ namespace Products.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.1");
 
-            modelBuilder.Entity("Products.Domain.Product", b =>
+            modelBuilder.Entity("Products.Domain.Entities.Product", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
