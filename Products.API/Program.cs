@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Identity;
@@ -63,6 +64,14 @@ builder.WebHost.UseUrls("http://0.0.0.0:5209", "https://0.0.0.0:7263");
 ConfigureCertificates(builder);
 
 ConfigureCors(builder);
+
+builder.Services.AddApiVersioning(options =>
+{
+    options.ReportApiVersions = true; 
+    options.AssumeDefaultVersionWhenUnspecified = true; 
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+})
+.AddMvc();
 
 var app = builder.Build();
 

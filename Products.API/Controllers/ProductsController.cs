@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Products.Application.DTOs;
 using Products.Domain.Interfaces;
@@ -6,7 +7,8 @@ using Products.Domain.Interfaces;
 namespace Products.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [Authorize]
     public class ProductsController : ControllerBase
     {
@@ -18,6 +20,7 @@ namespace Products.Controllers
         }
 
         [HttpGet]
+        [MapToApiVersion("1.0")]
         public async Task<IActionResult> GetAll()
         {
             var result = await _productRepository.GetAllAsync();
@@ -29,6 +32,7 @@ namespace Products.Controllers
         }
 
         [HttpGet("{id}")]
+        [MapToApiVersion("1.0")]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _productRepository.GetByIdAsync(id);
@@ -40,6 +44,7 @@ namespace Products.Controllers
         }
 
         [HttpPost]
+        [MapToApiVersion("1.0")]
         public async Task<IActionResult> Add(ProductDto productDto)
         {
             var result = await _productRepository.AddAsync(productDto);
@@ -51,6 +56,7 @@ namespace Products.Controllers
         }
 
         [HttpPut("{id}")]
+        [MapToApiVersion("1.0")]
         public async Task<IActionResult> Update(int id, ProductDto productDto)
         {
             if (id != productDto.Id)
@@ -65,6 +71,7 @@ namespace Products.Controllers
         }
 
         [HttpDelete("{id}")]
+        [MapToApiVersion("1.0")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _productRepository.DeleteAsync(id);
