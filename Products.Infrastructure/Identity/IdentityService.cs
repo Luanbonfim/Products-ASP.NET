@@ -4,6 +4,8 @@ using Products.Application.Interfaces;
 using Products.Common;
 using Products.Common.Helpers;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using Products.Infrastructure.Persistence;
 
 namespace Products.Infrastructure.Identity
 {
@@ -11,56 +13,142 @@ namespace Products.Infrastructure.Identity
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly LoggerHelper _loggerHelper;
+        private readonly UserDbContext _userDbContext;
         private const string LOGIN_SUCCESSFUL_MESSAGE = "Login successful";
         private const string USER_NOT_FOUND_MESSAGE = "User not found";
 
         public IdentityService(UserManager<IdentityUser> userManager, 
                              SignInManager<IdentityUser> signInManager,
-                             LoggerHelper loggerHelper)
+                             RoleManager<IdentityRole> roleManager,
+                             LoggerHelper loggerHelper,
+                             UserDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _roleManager = roleManager;
             _loggerHelper = loggerHelper;
+            _userDbContext = context;
+        }
+
+        private async Task<OperationResult<bool>> CreateRoleIfNotExistsAsync(string role)
+        {
+            if (!await _roleManager.RoleExistsAsync(role))
+            {
+                var result = await _roleManager.CreateAsync(new IdentityRole(role));
+                if (result.Succeeded)
+                {
+                    _loggerHelper.LogMessage(LogLevelType.Information, $"Role {role} created successfully");
+                    return new OperationResult<bool>
+                    {
+                        IsSuccess = true,
+                        Data = true,
+                        Message = $"Role {role} created successfully"
+                    };
+                }
+                else
+                {
+                    _loggerHelper.LogMessage(LogLevelType.Error, $"Failed to create role {role}: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                    return new OperationResult<bool>
+                    {
+                        IsSuccess = false,
+                        Data = false,
+                        Message = "Failed to create role",
+                        Errors = result.Errors.Select(e => e.Description).ToList()
+                    };
+                }
+            }
+            return new OperationResult<bool>
+            {
+                IsSuccess = true,
+                Data = true,
+                Message = $"Role {role} already exists"
+            };
         }
 
         public async Task<OperationResult<string>> CreateUserAsync(UserDto userDto, string role)
         {
-            var user = new IdentityUser 
-            { 
-                UserName = userDto.Email,
-                Email = userDto.Email,
-            };
-
-            var result = await _userManager.CreateAsync(user, userDto.Password);
-
-            if (result.Succeeded)
+            using var transaction = await _userDbContext.Database.BeginTransactionAsync();
+            try
             {
-                if (!string.IsNullOrEmpty(userDto.FirstName))
+                // First, ensure the role exists
+                var roleResult = await CreateRoleIfNotExistsAsync(role);
+                if (!roleResult.IsSuccess)
                 {
-                    await _userManager.AddClaimAsync(user, new Claim(ClaimTypes.GivenName, userDto.FirstName));
-                }
-                if (!string.IsNullOrEmpty(userDto.LastName))
-                {
-                    await _userManager.AddClaimAsync(user, new Claim(ClaimTypes.Surname, userDto.LastName));
+                    await transaction.RollbackAsync();
+                    return new OperationResult<string>
+                    {
+                        IsSuccess = false,
+                        Message = "Failed to create role",
+                        Errors = roleResult.Errors
+                    };
                 }
 
-                _loggerHelper.LogMessage(LogLevelType.Information, $"User {userDto.Email} created successfully with role {role}");
+                var user = new IdentityUser 
+                { 
+                    UserName = userDto.Email,
+                    Email = userDto.Email,
+                };
+
+                var result = await _userManager.CreateAsync(user, userDto.Password);
+
+                if (result.Succeeded)
+                {
+                    // Add claims
+                    if (!string.IsNullOrEmpty(userDto.FirstName))
+                    {
+                        await _userManager.AddClaimAsync(user, new Claim(ClaimTypes.GivenName, userDto.FirstName));
+                    }
+                    if (!string.IsNullOrEmpty(userDto.LastName))
+                    {
+                        await _userManager.AddClaimAsync(user, new Claim(ClaimTypes.Surname, userDto.LastName));
+                    }
+
+                    // Assign role to user
+                    var roleAssignmentResult = await _userManager.AddToRoleAsync(user, role);
+                    if (!roleAssignmentResult.Succeeded)
+                    {
+                        _loggerHelper.LogMessage(LogLevelType.Warning, $"User created but failed to assign role: {string.Join(", ", roleAssignmentResult.Errors.Select(e => e.Description))}");
+                        await transaction.RollbackAsync();
+                        return new OperationResult<string>
+                        {
+                            IsSuccess = false,
+                            Message = "Failed to assign role to user",
+                            Errors = roleAssignmentResult.Errors.Select(e => e.Description).ToList()
+                        };
+                    }
+
+                    await transaction.CommitAsync();
+                    _loggerHelper.LogMessage(LogLevelType.Information, $"User {userDto.Email} created successfully with role {role}");
+                    return new OperationResult<string>
+                    {
+                        IsSuccess = true,
+                        Data = user.Id,
+                        Message = "User created successfully"
+                    };
+                }
+
+                await transaction.RollbackAsync();
+                var errorMessage = string.Join(", ", result.Errors.Select(e => e.Description));
+                _loggerHelper.LogMessage(LogLevelType.Error, $"Error creating user {userDto.Email}: {errorMessage}");
                 return new OperationResult<string>
                 {
-                    IsSuccess = true,
-                    Data = user.Id,
-                    Message = "User created successfully"
+                    IsSuccess = false,
+                    Errors = result.Errors.Select(e => e.Description).ToList()
                 };
             }
-
-            var errorMessage = string.Join(", ", result.Errors.Select(e => e.Description));
-            _loggerHelper.LogMessage(LogLevelType.Error, $"Error creating user {userDto.Email}: {errorMessage}");
-            return new OperationResult<string>
+            catch (Exception ex)
             {
-                IsSuccess = false,
-                Errors = result.Errors.Select(e => e.Description).ToList()
-            };
+                await transaction.RollbackAsync();
+                _loggerHelper.LogMessage(LogLevelType.Error, $"Transaction failed while creating user {userDto.Email}: {ex.Message}");
+                return new OperationResult<string>
+                {
+                    IsSuccess = false,
+                    Message = "An error occurred while creating the user",
+                    Errors = new List<string> { ex.Message }
+                };
+            }
         }
 
         public async Task<OperationResult<bool>> AssignRoleToUserAsync(string userId, string role)
@@ -116,13 +204,15 @@ namespace Products.Infrastructure.Identity
                 _loggerHelper.LogMessage(LogLevelType.Information, $"User {email} logged in successfully");
                 
                 var claims = await _userManager.GetClaimsAsync(user);
+                var roles = await _userManager.GetRolesAsync(user);
 
                 var userDto = new UserDto
                 {
                     Id = user.Id,
                     Email = user.Email,
                     FirstName = claims.FirstOrDefault(c => c.Type == ClaimTypes.GivenName)?.Value,
-                    LastName = claims.FirstOrDefault(c => c.Type == ClaimTypes.Surname)?.Value
+                    LastName = claims.FirstOrDefault(c => c.Type == ClaimTypes.Surname)?.Value,
+                    Roles = roles.ToList()
                 };
 
                 return new OperationResult<UserDto>
@@ -169,12 +259,15 @@ namespace Products.Infrastructure.Identity
             }
 
             var claims = await _userManager.GetClaimsAsync(identityUser);
+            var roles = await _userManager.GetRolesAsync(identityUser);
+
             var userDto = new UserDto
             {
                 Id = identityUser.Id,
                 Email = identityUser.Email,
                 FirstName = claims.FirstOrDefault(c => c.Type == ClaimTypes.GivenName)?.Value,
-                LastName = claims.FirstOrDefault(c => c.Type == ClaimTypes.Surname)?.Value
+                LastName = claims.FirstOrDefault(c => c.Type == ClaimTypes.Surname)?.Value,
+                Roles = roles.ToList()
             };
 
             _loggerHelper.LogMessage(LogLevelType.Information, $"User {identityUser.Email} is signed in");
