@@ -6,6 +6,7 @@ using Products.Common.Helpers;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Products.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Products.Infrastructure.Identity
 {
@@ -95,17 +96,10 @@ namespace Products.Infrastructure.Identity
 
                 if (result.Succeeded)
                 {
-                    // Add claims
-                    if (!string.IsNullOrEmpty(userDto.FirstName))
-                    {
-                        await _userManager.AddClaimAsync(user, new Claim(ClaimTypes.GivenName, userDto.FirstName));
-                    }
-                    if (!string.IsNullOrEmpty(userDto.LastName))
-                    {
-                        await _userManager.AddClaimAsync(user, new Claim(ClaimTypes.Surname, userDto.LastName));
-                    }
 
-                    // Assign role to user
+                    await CrateUserClaims(userDto.FirstName, userDto.LastName, user);
+
+
                     var roleAssignmentResult = await _userManager.AddToRoleAsync(user, role);
                     if (!roleAssignmentResult.Succeeded)
                     {
@@ -148,6 +142,18 @@ namespace Products.Infrastructure.Identity
                     Message = "An error occurred while creating the user",
                     Errors = new List<string> { ex.Message }
                 };
+            }
+        }
+
+        private async Task CrateUserClaims(string firstName, string lastName, IdentityUser user)
+        {
+            if (!string.IsNullOrEmpty(firstName))
+            {
+                await _userManager.AddClaimAsync(user, new Claim(ClaimTypes.GivenName, firstName));
+            }
+            if (!string.IsNullOrEmpty(lastName))
+            {
+                await _userManager.AddClaimAsync(user, new Claim(ClaimTypes.Surname, lastName));
             }
         }
 
@@ -358,55 +364,84 @@ namespace Products.Infrastructure.Identity
                 };
             }
 
+            return await CreateUserAndSignInWithGoogleInfo(info);
+        }
+
+        private async Task<OperationResult<bool>> CreateUserAndSignInWithGoogleInfo(ExternalLoginInfo info)
+        {
             var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+            var firstName = info.Principal.FindFirstValue(ClaimTypes.GivenName);
+            var lastName = info.Principal.FindFirstValue(ClaimTypes.Surname);
             var user = await _userManager.FindByEmailAsync(email);
 
-            if (user == null)
+            using var transaction = await _userDbContext.Database.BeginTransactionAsync();
+            try
             {
-                user = new IdentityUser
+                if (user == null)
                 {
-                    UserName = email,
-                    Email = email
-                };
+                    user = new IdentityUser
+                    {
+                        UserName = email,
+                        Email = email
+                    };
 
-                var createResult = await _userManager.CreateAsync(user);
-                if (!createResult.Succeeded)
+                    var createResult = await _userManager.CreateAsync(user);
+                    if (!createResult.Succeeded)
+                    {
+                        var errorMessage = string.Join(", ", createResult.Errors.Select(e => e.Description));
+                        _loggerHelper.LogMessage(LogLevelType.Error, $"Error creating user from Google login - Email: {email}, Errors: {errorMessage}");
+                        await transaction.RollbackAsync();
+                        return new OperationResult<bool>
+                        {
+                            IsSuccess = false,
+                            Data = false,
+                            Message = "Error creating user",
+                            Errors = createResult.Errors.Select(e => e.Description).ToList()
+                        };
+                    }
+
+                    await CrateUserClaims(firstName, lastName, user);
+                    _loggerHelper.LogMessage(LogLevelType.Information, $"New user created from Google login: {email}");
+                }
+
+                var addLoginResult = await _userManager.AddLoginAsync(user, info);
+                if (!addLoginResult.Succeeded)
                 {
-                    var errorMessage = string.Join(", ", createResult.Errors.Select(e => e.Description));
-                    _loggerHelper.LogMessage(LogLevelType.Error, $"Error creating user from Google login - Email: {email}, Errors: {errorMessage}");
+                    var errorMessage = string.Join(", ", addLoginResult.Errors.Select(e => e.Description));
+                    _loggerHelper.LogMessage(LogLevelType.Error, $"Error linking Google account for user {email}: {errorMessage}");
+                    await transaction.RollbackAsync();
                     return new OperationResult<bool>
                     {
                         IsSuccess = false,
                         Data = false,
-                        Message = "Error creating user",
-                        Errors = createResult.Errors.Select(e => e.Description).ToList()
+                        Message = "Error linking Google account",
+                        Errors = addLoginResult.Errors.Select(e => e.Description).ToList()
                     };
                 }
-                _loggerHelper.LogMessage(LogLevelType.Information, $"New user created from Google login: {email}");
-            }
 
-            var addLoginResult = await _userManager.AddLoginAsync(user, info);
-            if (!addLoginResult.Succeeded)
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                _loggerHelper.LogMessage(LogLevelType.Information, $"User {email} successfully signed in after Google authentication");
+
+                await transaction.CommitAsync();
+                return new OperationResult<bool>
+                {
+                    IsSuccess = true,
+                    Data = true,
+                    Message = LOGIN_SUCCESSFUL_MESSAGE
+                };
+            }
+            catch (Exception ex)
             {
-                var errorMessage = string.Join(", ", addLoginResult.Errors.Select(e => e.Description));
-                _loggerHelper.LogMessage(LogLevelType.Error, $"Error linking Google account for user {email}: {errorMessage}");
+                await transaction.RollbackAsync();
+                _loggerHelper.LogMessage(LogLevelType.Error, $"Transaction failed during Google authentication for user {email}: {ex.Message}");
                 return new OperationResult<bool>
                 {
                     IsSuccess = false,
                     Data = false,
-                    Message = "Error linking Google account",
-                    Errors = addLoginResult.Errors.Select(e => e.Description).ToList()
+                    Message = "An error occurred during Google authentication",
+                    Errors = new List<string> { ex.Message }
                 };
             }
-
-            await _signInManager.SignInAsync(user, isPersistent: false);
-            _loggerHelper.LogMessage(LogLevelType.Information, $"User {email} successfully signed in after Google authentication");
-            return new OperationResult<bool>
-            {
-                IsSuccess = true,
-                Data = true,
-                Message = LOGIN_SUCCESSFUL_MESSAGE
-            };
         }
     }
 }
