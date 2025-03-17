@@ -45,6 +45,7 @@ namespace Products.Controllers
 
         [HttpPost]
         [MapToApiVersion("1.0")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Add(ProductDto productDto)
         {
             var result = await _productRepository.AddAsync(productDto);
@@ -57,6 +58,7 @@ namespace Products.Controllers
 
         [HttpPut("{id}")]
         [MapToApiVersion("1.0")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, ProductDto productDto)
         {
             if (id != productDto.Id)
@@ -72,6 +74,7 @@ namespace Products.Controllers
 
         [HttpDelete("{id}")]
         [MapToApiVersion("1.0")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _productRepository.DeleteAsync(id);
