@@ -8,8 +8,8 @@ namespace Products.Application.Interfaces
     {
         Task<OperationResult<string>> CreateUserAsync(UserDto userDto, string role);
         Task<OperationResult<bool>> AssignRoleToUserAsync(string userId, string role);
-        Task<OperationResult<bool>> LoginAsync(string email, string password);
-        Task<bool> IsSignedIn(ClaimsPrincipal user);
+        Task<OperationResult<UserDto>> LoginAsync(string email, string password);
+        Task<OperationResult<UserDto>> IsSignedIn(ClaimsPrincipal user);
         Task<OperationResult<bool>> LogOut();
         Task<OperationResult<object>> GetGoogleLoginProperties(string redirectUrl);
         Task<OperationResult<bool>> GetGoogleResponse();
