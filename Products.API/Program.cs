@@ -1,99 +1,30 @@
-using Asp.Versioning;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Products.Application.Interfaces;
-using Products.Common.Helpers;
-using Products.Domain.Interfaces;
-using Products.Infrastructure.Identity;
-using Products.Infrastructure.Messaging;
+using Products.API.Extensions;
 using Products.Infrastructure.Persistence;
-using Products.Infrastructure.Repositories;
-using Products.Middlewares;
 using System.Security.Cryptography.X509Certificates;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Configure services
+builder.Services
+    .AddApplicationServices()
+    .AddDatabaseContexts(builder.Configuration)
+    .AddAuthenticationServices()
+    .AddIdentityServices()
+    .AddSwaggerServices()
+    .AddCorsServices()
+    .AddApiVersioningServices();
 
-// Register DbContext with SQL Lite
-builder.Services.AddDbContext<ProductsDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-builder.Services.AddDbContext<UserDbContext>(options =>
-                options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-//// Add Cookies based Authentication
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
-})
-.AddCookie()
-.AddGoogle(options =>
-           {
-               options.ClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
-               options.ClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
-           });
-
-ConfigureSwagger(builder);
-
-// Add controllers
-builder.Services.AddControllers();
-
-//DIs
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-
-builder.Services.AddScoped<IIdentityService, IdentityService>();
-
-builder.Services.AddSingleton<IRabbitMqPublisher, RabbitMqPublisher>();
-
-builder.Logging.AddConsole();
-
-builder.Services.AddLogging();
-
-builder.Services.AddSingleton<LoggerHelper>();
-
-ConfigureIdentity(builder);
-
-builder.WebHost.UseUrls("http://0.0.0.0:5209", "https://0.0.0.0:7263");
-
-// Configure Kestrel to use the certificate from environment variables
-ConfigureCertificates(builder);
-
-ConfigureCors(builder);
-
-builder.Services.AddApiVersioning(options =>
-{
-    options.ReportApiVersions = true; 
-    options.AssumeDefaultVersionWhenUnspecified = true; 
-    options.DefaultApiVersion = new ApiVersion(1, 0);
-})
-.AddMvc();
+// Configure Kestrel and URLs
+builder
+    .ConfigureKestrelWithCertificates()
+    .ConfigureUrls();
 
 var app = builder.Build();
 
-// Use Swagger UI middleware
-app.UseSwagger();  // Adds Swagger JSON endpoint
-app.UseSwaggerUI();  // Adds Swagger UI for browsing the API
-
-app.UseHttpsRedirection();
-
-app.UseCors("AllowAngularApp");
-app.UseRouting();
-
-// Enable authentication and authorization
-app.UseAuthentication();
-app.UseAuthorization();
-
-
-// Use the logging middleware
-app.UseMiddleware<LoggingMiddleware>();
-
-// Map controllers
-app.MapControllers();
+// Configure the application
+app.ConfigureWebApplication();
 
 app.Run();
 
