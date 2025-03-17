@@ -24,7 +24,9 @@ A simple and secure RESTful API for managing products in an e-commerce or invent
 - **RabbitMQ for messaging service**
 - **DockerFile to containerize the application**
 - **oAuth 2.0 to allow third party login**
-  
+
+  ![image](https://github.com/user-attachments/assets/e678eb4f-68d1-45a5-869c-975acc199c6d)
+
 ## Prerequisites
 
 Before you can run this project, make sure you have the following installed on your system:
