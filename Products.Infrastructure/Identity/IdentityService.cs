@@ -95,17 +95,16 @@ namespace Products.Infrastructure.Identity
             };
         }
 
-        public async Task<OperationResult<bool>> LoginAsync(string email, string password)
+        public async Task<OperationResult<UserDto>> LoginAsync(string email, string password)
         {
             var user = await _userManager.FindByNameAsync(email);
 
             if (user == null)
             {
                 _loggerHelper.LogMessage(LogLevelType.Warning, $"Login attempt failed: User {email} not found");
-                return new OperationResult<bool>
+                return new OperationResult<UserDto>
                 {
                     IsSuccess = false,
-                    Data = false,
                     Message = USER_NOT_FOUND_MESSAGE
                 };
             }
@@ -115,23 +114,76 @@ namespace Products.Infrastructure.Identity
             if (result.Succeeded)
             {
                 _loggerHelper.LogMessage(LogLevelType.Information, $"User {email} logged in successfully");
+                
+                var claims = await _userManager.GetClaimsAsync(user);
+
+                var userDto = new UserDto
+                {
+                    Id = user.Id,
+                    Email = user.Email,
+                    FirstName = claims.FirstOrDefault(c => c.Type == ClaimTypes.GivenName)?.Value,
+                    LastName = claims.FirstOrDefault(c => c.Type == ClaimTypes.Surname)?.Value
+                };
+
+                return new OperationResult<UserDto>
+                {
+                    IsSuccess = true,
+                    Data = userDto,
+                    Message = LOGIN_SUCCESSFUL_MESSAGE
+                };
             }
             else
             {
                 _loggerHelper.LogMessage(LogLevelType.Warning, $"Failed login attempt for user {email}");
+                return new OperationResult<UserDto>
+                {
+                    IsSuccess = false,
+                    Message = "Invalid credentials"
+                };
             }
-
-            return new OperationResult<bool>
-            {
-                IsSuccess = result.Succeeded,
-                Data = result.Succeeded,
-                Message = result.Succeeded ? LOGIN_SUCCESSFUL_MESSAGE : "Invalid credentials"
-            };
         }
 
-        public async Task<bool> IsSignedIn(ClaimsPrincipal user)
+        public async Task<OperationResult<UserDto>> IsSignedIn(ClaimsPrincipal user)
         {
-            return await Task.FromResult(_signInManager.IsSignedIn(user));
+            if (!_signInManager.IsSignedIn(user))
+            {
+                _loggerHelper.LogMessage(LogLevelType.Warning, "User is not signed in");
+                return new OperationResult<UserDto>
+                {
+                    IsSuccess = false,
+                    Message = "User is not signed in"
+                };
+            }
+
+            var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            var identityUser = await _userManager.FindByIdAsync(userId);
+
+            if (identityUser == null)
+            {
+                _loggerHelper.LogMessage(LogLevelType.Warning, "User not found in database");
+                return new OperationResult<UserDto>
+                {
+                    IsSuccess = false,
+                    Message = "User not found"
+                };
+            }
+
+            var claims = await _userManager.GetClaimsAsync(identityUser);
+            var userDto = new UserDto
+            {
+                Id = identityUser.Id,
+                Email = identityUser.Email,
+                FirstName = claims.FirstOrDefault(c => c.Type == ClaimTypes.GivenName)?.Value,
+                LastName = claims.FirstOrDefault(c => c.Type == ClaimTypes.Surname)?.Value
+            };
+
+            _loggerHelper.LogMessage(LogLevelType.Information, $"User {identityUser.Email} is signed in");
+            return new OperationResult<UserDto>
+            {
+                IsSuccess = true,
+                Data = userDto,
+                Message = "User is signed in"
+            };
         }
 
         public async Task<OperationResult<bool>> LogOut()

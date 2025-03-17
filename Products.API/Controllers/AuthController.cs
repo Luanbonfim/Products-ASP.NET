@@ -32,9 +32,9 @@ namespace Products.Controllers
             var result = await _identityService.LoginAsync(request.Email, request.Password);
 
             if (result.IsSuccess)
-                return Ok();
+                return Ok(result.Data);
 
-            return Unauthorized("Invalid credentials.");
+            return Unauthorized(result.Message);
         }
 
         [HttpPost("createuser")]
@@ -72,17 +72,14 @@ namespace Products.Controllers
         [MapToApiVersion("1.0")]
         public async Task<IActionResult> CheckAuth()
         {
-            var IsSignedIn = await _identityService.IsSignedIn(HttpContext.User);
+            var result = await _identityService.IsSignedIn(HttpContext.User);
 
-            if (IsSignedIn)
+            if (result.IsSuccess)
             {
-                var userName = HttpContext.User.Identity.Name;
-                return Ok(new { message = "User is authenticated", userName });
+                return Ok(result.Data);
             }
-            else
-            {
-                return Unauthorized(new { message = "User is not authenticated" });
-            }
+
+            return Unauthorized(result.Message);
         }
 
         [HttpGet("google-login")]
