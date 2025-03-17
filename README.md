@@ -11,6 +11,7 @@ A simple and secure RESTful API for managing products in an e-commerce or invent
 - **DDD**: Domain Driven Design for clean architecture.
 - **RabbitMQ**: Messaging for microservices architecture.
 - **Google oAuth**: authentication through google oAuth.
+- **Role based authorizarion** Only admin users can run write operations
   
 ## Technology Stack
 
