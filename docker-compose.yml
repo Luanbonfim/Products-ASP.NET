@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "7263:7263"
+    environment:
+      ConnectionStrings__DefaultConnection: Data Source=/app/data/Products.db
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      CERTIFICATE_PATH: ${CERTIFICATE_PATH}
+      CERTIFICATE_PASSWORD: ${CERTIFICATE_PASSWORD}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
