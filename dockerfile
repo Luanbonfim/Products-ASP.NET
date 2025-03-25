@@ -31,4 +31,8 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 COPY --from=build /certs /certs
+
+# Create volume for database
+VOLUME /app/data
+
 ENTRYPOINT ["dotnet", "ProductsAPI.dll"]
