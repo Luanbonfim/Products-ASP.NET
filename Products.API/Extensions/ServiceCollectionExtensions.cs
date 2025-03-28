@@ -139,18 +139,16 @@ namespace Products.API.Extensions
             return services;
         }
 
-        public static IServiceCollection AddCorsServices(this IServiceCollection services)
+        public static IServiceCollection AddCorsServices(this IServiceCollection services, IConfiguration configuration)
         {
+            var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowAngularApp",
                     builder =>
                     {
-                        builder.WithOrigins(
-                                "http://localhost:4200",
-                                "https://localhost:7263",
-                                "http://localhost:51253",
-                                "http://localhost:54143")
+                        builder.WithOrigins(allowedOrigins)
                             .AllowAnyHeader()
                             .AllowAnyMethod()
                             .AllowCredentials();
