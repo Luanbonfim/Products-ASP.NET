@@ -11,7 +11,7 @@ builder.Services
     .AddAuthenticationServices()
     .AddIdentityServices()
     .AddSwaggerServices()
-    .AddCorsServices()
+    .AddCorsServices(builder.Configuration)
     .AddApiVersioningServices();
 
 // Configure Kestrel and URLs
